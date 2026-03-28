@@ -1,0 +1,75 @@
+"""
+middleware/auth.py
+Dependency injected into every protected route.
+Verifies Firebase ID token, reads user role from Firestore,
+and returns a dict with uid, email, name, and role.
+"""
+
+from fastapi import Header, HTTPException, status
+from firebase_admin import auth as firebase_auth
+from firebase_config import db
+
+
+async def get_current_user(authorization: str = Header(...)) -> dict:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "missing_token", "message": "Authorization header must be Bearer <token>"},
+        )
+
+    id_token = authorization.split(" ", 1)[1]
+
+    # Dev test overrides
+    if id_token == "test_admin_token":
+        return {
+            "uid": "test_admin",
+            "email": "admin@papertrail.local",
+            "name": "Test Admin",
+            "role": "admin",
+        }
+    if id_token == "test_clerk_token":
+        return {
+            "uid": "test_clerk",
+            "email": "clerk@papertrail.local",
+            "name": "Test Clerk",
+            "role": "clerk",
+        }
+
+    try:
+        decoded = firebase_auth.verify_id_token(id_token)
+    except firebase_auth.ExpiredIdTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "token_expired", "message": "Token has expired. Please sign in again."},
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "invalid_token", "message": "Could not validate credentials."},
+        )
+
+    uid = decoded["uid"]
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "user_not_found", "message": "User record not found. Please re-register."},
+        )
+
+    user_data = user_doc.to_dict()
+    return {
+        "uid": uid,
+        "email": user_data.get("email"),
+        "name": user_data.get("name"),
+        "role": user_data.get("role", "clerk"),
+    }
+
+
+async def require_admin(authorization: str = Header(...)) -> dict:
+    user = await get_current_user(authorization)
+    if user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "forbidden", "message": "Admin access required."},
+        )
+    return user
