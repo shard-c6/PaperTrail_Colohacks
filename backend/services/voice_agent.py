@@ -1,22 +1,30 @@
 """
 services/voice_agent.py
 Feature 2 — AI Voice Agent
-Stateless Claude Sonnet integration.
+Stateless local-model (Ollama) integration via OpenAI-compatible API.
+
 The frontend sends the clerk's transcribed question + extracted fields.
-Claude answers in the clerk's language in 1-2 sentences and identifies
+The model answers in the clerk's language in 1-2 sentences and identifies
 which field it was talking about (for frontend bounding-box flash).
+
+Env vars:
+  OPENAI_API_BASE      = http://localhost:11434/v1   (Ollama default)
+  OPENAI_API_KEY       = ollama                      (Ollama ignores the key)
+  VOICE_AGENT_MODEL    = deepseek-r1:1.5b            (or any pulled Ollama model)
 """
 
 import json
 import os
 import re
 
-import anthropic
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_MODEL = os.getenv("VOICE_AGENT_MODEL", "claude-sonnet-4-5")
+_BASE_URL = os.getenv("OPENAI_API_BASE", "http://localhost:11434/v1")
+_API_KEY  = os.getenv("OPENAI_API_KEY", "ollama")   # Ollama ignores the key value
+_MODEL    = os.getenv("VOICE_AGENT_MODEL", "deepseek-r1:1.5b")
 
 # Language display names for the system prompt
 _LANG_NAMES = {
@@ -32,7 +40,7 @@ Form: {template_name}
 Clerk's preferred language: {lang_name} ({language})
 
 Extracted fields from the form (OCR results with confidence scores):
-{fields_json}
+{fields_str}
 
 RULES:
 1. Answer ONLY about the current form and its fields. Do NOT answer off-topic questions.
@@ -52,7 +60,7 @@ async def ask_voice_agent(
     template_name: str = "government form",
 ) -> dict:
     """
-    Call Claude Sonnet with the clerk's question and the form's extracted fields.
+    Call the local Ollama model with the clerk's question and the form's extracted fields.
 
     Args:
         question:         Clerk's spoken question (already transcribed by Web Speech API).
@@ -64,18 +72,14 @@ async def ask_voice_agent(
         {"answer": str, "field_referenced": str | None}
 
     Raises:
-        RuntimeError: If Claude is unavailable or returns unparseable JSON.
+        RuntimeError: If the model is unavailable or returns unparseable JSON.
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set in environment.")
-
     # Build a readable field list for the prompt
     field_lines = []
     for f in extracted_fields:
         confidence_pct = int(f.get("confidence", 0) * 100)
         uncertain_flag = " [UNCERTAIN]" if f.get("uncertain") else ""
-        value_display = f.get("value") or "(empty)"
+        value_display  = f.get("value") or "(empty)"
         field_lines.append(
             f"  - field_id={f['field_id']!r}  label={f['label']!r}  "
             f"value={value_display!r}  confidence={confidence_pct}%{uncertain_flag}"
@@ -86,33 +90,47 @@ async def ask_voice_agent(
         template_name=template_name,
         lang_name=_LANG_NAMES.get(language, language),
         language=language,
-        fields_json=fields_str,
+        fields_str=fields_str,
     )
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = AsyncOpenAI(base_url=_BASE_URL, api_key=_API_KEY)
 
     try:
-        message = client.messages.create(
+        response = await client.chat.completions.create(
             model=_MODEL,
             max_tokens=256,
-            system=system_prompt,
-            messages=[{"role": "user", "content": question}],
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": question},
+            ],
         )
-    except anthropic.APIStatusError as exc:
-        raise RuntimeError(f"Claude API error {exc.status_code}: {exc.message}") from exc
-    except anthropic.APIConnectionError as exc:
-        raise RuntimeError("Claude API is unreachable.") from exc
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "connection" in msg or "connect" in msg or "refused" in msg:
+            raise RuntimeError(
+                f"Ollama is unreachable at {_BASE_URL}. "
+                "Make sure Ollama is running (`ollama serve`) and the model is pulled."
+            ) from exc
+        raise RuntimeError(f"Local model error: {exc}") from exc
 
-    raw = message.content[0].text.strip()
+    raw = response.choices[0].message.content.strip()
+
+    # deepseek-r1 wraps its reasoning in <think>…</think> — strip it before parsing
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+
+    # Strip markdown fences if the model wrapped JSON in ```
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
 
     # Parse the JSON response; fall back gracefully if malformed
     try:
-        parsed = json.loads(raw)
-        answer = str(parsed.get("answer", ""))
+        parsed        = json.loads(raw)
+        answer        = str(parsed.get("answer", ""))
         field_referenced = parsed.get("field_referenced") or None
     except (json.JSONDecodeError, AttributeError):
-        # Try to extract answer text even if JSON is broken
-        answer = raw
+        # If JSON is broken, return the raw text as the answer
+        answer        = raw
         field_referenced = None
 
     # Validate field_referenced is actually one of the sent field_ids
