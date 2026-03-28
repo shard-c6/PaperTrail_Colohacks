@@ -4,8 +4,11 @@ Pydantic v2 request/response models for all API endpoints.
 """
 
 from __future__ import annotations
-from typing import Any, Optional
-from pydantic import BaseModel, EmailStr
+from typing import Any, List, Literal, Optional
+from pydantic import BaseModel, EmailStr, Field
+
+# Accepted BCP-47 language tags
+ACCEPTED_LANGUAGES = Literal["en-IN", "hi-IN", "mr-IN"]
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -15,6 +18,7 @@ from pydantic import BaseModel, EmailStr
 class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
+    preferred_language: Optional[ACCEPTED_LANGUAGES] = "en-IN"  # NEW
 
 
 class UserResponse(BaseModel):
@@ -23,6 +27,10 @@ class UserResponse(BaseModel):
     email: str
     role: str
     created_at: str
+    # Voice preference fields (default-filled for backwards compat)
+    preferred_language: str = "en-IN"
+    voice_mode_enabled: bool = False
+    voice_agent_enabled: bool = False
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -189,3 +197,52 @@ class LatestDocumentEntry(BaseModel):
 
 class LatestDocumentsResponse(BaseModel):
     entries: list[LatestDocumentEntry]
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Voice — Feature 1: Language Preferences
+# ────────────────────────────────────────────────────────────────────────────────
+
+class VoicePreferencesUpdate(BaseModel):
+    """All fields optional — only send what changed."""
+    preferred_language: Optional[ACCEPTED_LANGUAGES] = None
+    voice_mode_enabled: Optional[bool] = None
+    voice_agent_enabled: Optional[bool] = None
+
+
+class VoicePreferencesResponse(BaseModel):
+    preferred_language: str
+    voice_mode_enabled: bool
+    voice_agent_enabled: bool
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Voice — Feature 2: AI Voice Agent
+# ────────────────────────────────────────────────────────────────────────────────
+
+class VoiceAgentField(BaseModel):
+    """Single extracted field sent by the frontend from /extract state."""
+    field_id: str
+    label: str
+    value: Optional[str] = None
+    confidence: float
+    uncertain: bool
+    bounding_box: Optional[dict] = None
+
+
+class VoiceAgentRequest(BaseModel):
+    session_id: str
+    question: str = Field(..., max_length=300, description="Clerk's spoken question, transcribed by Web Speech API. Max 300 chars.")
+    language: ACCEPTED_LANGUAGES
+    extracted_fields: List[VoiceAgentField] = Field(..., min_length=1)
+
+
+class VoiceAgentData(BaseModel):
+    answer: str
+    language: str
+    field_referenced: Optional[str] = None  # field_id most relevant to the question, or null
+
+
+class VoiceAgentResponse(BaseModel):
+    success: bool = True
+    data: VoiceAgentData

@@ -5,12 +5,12 @@ Run with: uvicorn main:app --reload --port 8000
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, pipeline, templates, admin
+from routers import auth, pipeline, templates, admin, voice
 
 app = FastAPI(
     title="PaperTrail API",
     description="Handwritten Government Form Digitisation Pipeline",
-    version="1.0.0",
+    version="1.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -29,11 +29,12 @@ app.include_router(auth.router, prefix="/v1")
 app.include_router(pipeline.router, prefix="/v1")
 app.include_router(templates.router, prefix="/v1")
 app.include_router(admin.router, prefix="/v1")
+app.include_router(voice.router, prefix="/v1")   # Voice & Accessibility Layer
 
 
 @app.get("/")
 async def root():
-    return {"service": "PaperTrail API", "version": "1.0.0", "status": "running"}
+    return {"service": "PaperTrail API", "version": "1.1.0", "status": "running"}
 
 
 @app.get("/health")
