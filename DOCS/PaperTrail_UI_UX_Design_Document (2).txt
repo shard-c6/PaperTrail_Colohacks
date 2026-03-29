@@ -1,0 +1,294 @@
+PaperTrail
+UI / UX Design Document
+Handwritten Government Form Digitisation Pipeline
+
+
+1. Design System
+The following foundations apply to every screen in PaperTrail. All components must use these tokens. No ad-hoc colour or typography values are permitted outside this system.
+1.1 Typography
+1.2 Colour Palette
+1.3 Spacing & Layout
+Base unit: 4px. All spacing values are multiples: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64px.
+Maximum content width: 1280px, centred. Navbar is full-width.
+Grid: 12-column grid at ≥1024px. 4-column at ≤768px (mobile).
+Border radius: 4px (inputs, small chips), 8px (cards, modals), 12px (hero sections).
+Shadow tokens: --shadow-sm (0 1px 3px rgba(0,0,0,.10)), --shadow-md (0 4px 12px rgba(0,0,0,.12)), --shadow-lg (0 12px 32px rgba(0,0,0,.15)).
+
+1.4 Interactive States
+1.5 Component Library
+Buttons
+Primary: bg --color-accent, text white, px-6 py-2.5, rounded-lg, font-semibold.
+Secondary: bg white, border 1.5px --color-accent, text --color-accent.
+Destructive: bg --color-error, text white — used only for delete/reject actions.
+Ghost: no background, text --color-accent, underline on hover. Used for 'Forgot Password', 'Already have an account?'.
+Icon Button: 40×40px, rounded-full, bg --color-surface. Used for dark mode toggle.
+Form Inputs
+Height: 44px. Font-size: 15px. Padding: 0 14px.
+Password fields include a show/hide eye icon (right-aligned inside input).
+Validation runs on blur and on submit. Error message appears below input in --color-error, font-size 13px.
+Cards & Modals
+Cards: bg white, border 1px #E5E7EB, border-radius 10px, shadow-md, padding 28px.
+Modals: centred overlay, backdrop blur-sm + rgba(0,0,0,0.4), card shadow-lg, max-width 480px, animate-in scale from 95%.
+Modal always shows a close × button top-right and a keyboard Escape handler.
+Navbar
+Position: sticky top-0, z-50, bg white, border-bottom 1px #E5E7EB, shadow-sm.
+Height: 64px. Left: 'PaperTrail' logotype (font-size 22px bold, --color-navy). Right: dark-mode toggle + avatar + username.
+
+1.6 Dark Mode
+Toggle button: sun icon (☀) in light mode, moon icon (☾) in dark mode. Positioned top-right in navbar.
+Implementation: toggle class dark on <html>. All colour tokens have dark-mode overrides via CSS variables.
+Dark key values: bg #111827, surface #1F2937, border #374151, text #F9FAFB, muted #9CA3AF.
+User preference persisted in localStorage ('pt_theme').
+
+
+2. UI Flow Overview
+PaperTrail has two distinct user journeys determined by the role returned from GET /auth/me. Every screen maps to one or more API calls defined in Section 6.
+2.1 Clerk Journey
+2.2 Admin Journey
+
+
+3. Screen Specifications
+
+Navbar
+Left: 'PaperTrail' logotype — Georgia, 22px, bold, --color-navy.
+Right cluster (left to right): [Dark Mode Icon Button] [Login / Sign Up — Primary Button].
+Dark-mode icon: ☀ (sun SVG) in dark mode, ☾ (moon SVG) in light mode. 40×40px rounded-full, bg --color-surface on hover.
+Hero Section
+Full-viewport-height section. Background: animated gradient mesh transitioning between --color-primary and #1B5EA6.
+Central infographic: SVG illustration of a scanned paper form being digitised (ink → pixels → structured data). Animate with CSS: form fades in, scan line sweeps, data fields populate.
+Headline: 'Digitise. Verify. Preserve.' — Georgia 48px bold, white.
+Sub-headline (2–3 sentences): 'PaperTrail transforms handwritten government forms into structured digital records. Powered by AI extraction and human verification — every field reviewed, every submission traceable.'
+CTA button: 'Start Digitising' — Primary button, large (px-10 py-4, text-lg). Links to /signup.
+How It Works Section
+Triggered on scroll into view. Uses Intersection Observer API.
+Animation: each step card slides in from bottom with staggered delay (0ms, 150ms, 300ms, 450ms).
+4 step cards in a row (or 2×2 on mobile):
+1. Upload — Icon: cloud-upload. 'Photograph or scan any government form.'
+2. Clean — Icon: sparkles. 'AI removes noise, corrects skew, and enhances clarity.'
+3. Extract — Icon: cursor-text. 'OCR maps every field. Uncertain values are flagged for you.'
+4. Submit — Icon: check-circle. 'Review, correct, and submit. A full audit trail is created.'
+
+
+Presented as a centred card (max-width 440px) on a blurred/dimmed page background when arriving from the landing page CTA.
+Card Contents
+Title: 'Create Account' — Georgia 24px bold.
+Fields (in order): Full Name (type=text), Email Address (type=email), Create Password (type=password, with show/hide icon), Confirm Password (type=password, with show/hide icon).
+Password strength indicator: 4-segment bar beneath the password field. Turns red → amber → green as constraints are met.
+Sign Up button (Primary, full-width): triggers Firebase sign-up → POST /auth/register. Shows spinner while loading.
+Below button: 'Already have an account?  Sign In' — 'Sign In' is a Ghost button link to /login.
+Password Validation Rules (client-side, enforced before Firebase call)
+Maximum 12 characters. Error: 'Password must be 12 characters or fewer.'
+At least 1 uppercase letter. Error: 'Include at least one uppercase letter.'
+At least 1 lowercase letter. Error: 'Include at least one lowercase letter.'
+At least 1 number. Error: 'Include at least one number.'
+Exactly 1 special character (not zero, not two or more). Error: 'Include exactly one special character.'
+Confirm password must match. Error: 'Passwords do not match.'
+API Sequence
+1. Client calls Firebase createUserWithEmailAndPassword(email, password).
+2. On success, client immediately calls POST /auth/register with { name, email } and the Firebase ID token. Role is set to 'clerk' server-side.
+3. On 200, redirect to /upload. On failure, show inline error and prompt user to contact support.
+
+
+Same card presentation as Sign Up. Card max-width 420px.
+Card Contents
+Title: 'Welcome Back' — Georgia 24px bold.
+Fields: Email Address (type=email), Password (type=password with show/hide icon).
+'Forgot Password?' — Ghost button, right-aligned, below password field. Links to /forgot-password.
+Sign In button (Primary, full-width): calls Firebase signInWithEmailAndPassword → on success calls GET /auth/me → routes to /upload (clerk) or /admin (admin).
+Below button: 'Don't have an account?  Sign Up' — 'Sign Up' Ghost link to /signup.
+API Sequence
+1. Firebase signInWithEmailAndPassword(email, password).
+2. GET /auth/me to retrieve role and profile.
+3. If role === 'admin', redirect to /admin. If role === 'clerk', redirect to /upload.
+
+
+Card Contents
+Title: 'Reset Password' — Georgia 22px bold.
+Field: Email Address.
+Description text: 'Enter the email address associated with your account. We'll send a reset link via Firebase.'
+'Send Reset Email' button (Primary, full-width): calls Firebase sendPasswordResetEmail(email).
+On success: show success state — green check icon, message 'Check your inbox. Follow the link to reset your password.' Back to Sign In link.
+Back arrow link top-left: returns to /login.
+
+
+
+The primary workspace for the clerk after authentication. Contains the global Authenticated Navbar.
+Authenticated Navbar (present on all post-login pages)
+Left: 'PaperTrail' logotype, 22px bold, --color-navy.
+Right: [Dark Mode Toggle] [Avatar circle with user's initials or profile pic] [Username — 14px, --color-gray].
+Avatar is a clickable trigger: opens a dropdown with two options — 'Profile' (links to /profile) and 'Logout' (calls Firebase signOut, clears token, redirects to /).
+Upload Area
+Centred card, max-width 640px, padding 48px.
+Title: 'Upload a Form' — 18px bold.
+'Upload Image' button (Primary) above the drag-and-drop zone. Accepts: image/* (JPG, PNG), application/pdf. Max size: 10 MB. Single file only.
+Drag-and-drop zone: dashed border --color-accent, border-radius 12px, bg --color-surface. On hover/drag-over: solid border, bg --color-surface tinted. Icon: cloud-upload. Text: 'Drag and drop a form image here, or click to browse. JPG · PNG · PDF (max 10 MB)'.
+Post-Upload Behaviour
+On file selection: show file name, size, and a thumbnail preview. A 'Remove' ghost button allows re-selection.
+On 'Proceed': call POST /pipeline/preprocess (multipart/form-data). Show a full-card loading overlay with a animated scan-line progress bar and text 'Uploading and cleaning image...'
+Store session_id from response in React state (and sessionStorage as backup).
+On 400/422 error: show inline error card in --color-error-bg with the error message. Do not navigate.
+On success: navigate to /upload/preview with cleaned_image_url and session_id.
+Template Not Found Modal
+Triggered when POST /pipeline/match-template returns match_status: 'no_match'.
+Backdrop: blur-sm + 40% black overlay.
+Modal card: white, shadow-lg, border-radius 12px, max-width 480px.
+Icon: warning triangle in --color-warning. Title: 'Template Not Found'. Body: 'This form doesn't match any template in our library. You can submit it for admin review, or try uploading a different image.'
+Two buttons: 'Submit as New Template' (Primary) → opens Template Submission flow; 'Try Again' (Secondary) → closes modal, allows re-upload.
+
+
+Shown after POST /pipeline/preprocess returns. Clerk must visually confirm the cleaned image before extraction proceeds.
+Layout
+Two-column layout at ≥768px; stacked on mobile.
+Left column: 'Original Upload' label, original_image_url displayed.
+Right column: 'Cleaned Image' label, cleaned_image_url displayed. An animated CSS scan-line sweeps the image once on load to visually indicate processing occurred.
+Below: image_metadata summary chips — 'DPI: 300', 'Skew corrected: 1.4°', 'Contrast enhanced: Yes'. Chips use --color-surface background.
+If skew_corrected_degrees > 10: show an amber warning banner — 'This image was heavily rotated (X°). Please confirm the cleaned result is readable before proceeding.'
+Actions
+'Looks Good — Continue' button (Primary): triggers POST /pipeline/match-template → navigate to /upload/processing.
+'Re-upload' button (Secondary): navigates back to /upload, discards session.
+
+
+Sequential loading screen that mirrors the backend pipeline. The clerk sees progress as each layer completes.
+Visual Design
+Centred single-column layout. Max-width 560px.
+The cleaned image is displayed, partially blurred with a pulsing CSS overlay (backdrop-filter blur(4px), animated opacity 0.4 → 0.7 → 0.4 at 1.5s interval).
+A circular spinner (40px) rotates above the status text.
+Status Text Sequence (driven by API calls completing)
+On /extract 200 response: blur lifts, spinner disappears, green check appears. Transition to /upload/review after 600ms.
+On 503 (OCR service down): stop sequence, show error card — 'OCR service is temporarily unavailable. Please wait 30 seconds and try again.' with a 'Retry' button.
+
+
+
+The most complex and critical screen in the clerk journey. Allows field-by-field verification against the original image.
+Layout
+Full-width layout. Two equal panels separated by a 1px vertical divider.
+Left Panel — 'Cleaned Image': image rendered at full panel width. Bounding box overlays drawn with SVG positioned absolutely over the image.
+Right Panel — 'Digitised Form': scrollable form with one input field per extracted field.
+Below both panels (centred): extraction summary badge — '10 of 12 fields extracted · 3 flagged for review'. Then a 'Submit' Primary button (full-width, max-width 320px).
+Bounding Box Behaviour
+Default state: thin border in --color-accent (blue) at 50% opacity drawn over each field region on the image.
+When clerk focuses/clicks a field in the right panel: the corresponding bounding box on the left highlights — solid border --color-warning (amber), light amber fill 20% opacity. Smooth CSS transition 150ms.
+Uncertain fields: bounding box uses --color-warning (amber) as default even unfocused.
+Confirmed/edited fields: bounding box turns --color-success (green).
+Form Field Rendering (Right Panel)
+Each field from extracted_fields is rendered as a labelled input group.
+Label: field label (e.g. 'Name of Child'), 13px, --color-muted.
+Input: 44px height, pre-filled with extracted value.
+Uncertain field (uncertain: true): input has amber background (--color-warning-bg), left border 3px solid --color-warning, warning icon (⚠) inside input right side.
+Null field (value: null): input is empty with red background (--color-error-bg), left border 3px solid --color-error, placeholder 'Not extracted — enter manually'.
+All fields are editable regardless of confidence. On edit, the amber/red styling clears (field is considered reviewed).
+data_type influences input: date → type=date, number/aadhaar/pincode → type=text + input pattern validation, gender_enum → <select> dropdown, boolean → radio group.
+Auto-save
+POST /pipeline/save-draft is called automatically every 60 seconds if the clerk has made any edits.
+Also called on window blur and on page unload (beforeunload event).
+A small 'Draft saved' toast notification (bottom-right, 3s) confirms each auto-save.
+If the clerk has been idle >90 minutes: show a session expiry warning modal — 'Your session expires in 30 minutes. Save your progress now.'
+Submit Flow
+Clerk clicks 'Submit'. Client validates: all required fields (required: true in field schema) must have a non-empty value.
+If validation fails: scroll to and highlight all empty required fields with red error styling.
+If valid: call POST /pipeline/submit with corrected_fields array. Show full-screen loading overlay 'Submitting record...'
+On 200: navigate to /records/{record_id} (the Overview page).
+On 409 (already submitted): show modal with the existing record_id and a link to the Overview page.
+
+
+The final screen in the form submission flow. Displays the immutable audit record. Data source: GET /pipeline/record/{record_id}.
+Layout — Three-Panel Card Row
+Panel 1 — 'Original Upload': displays original_image_url.
+Panel 2 — 'OCR Extraction (Pre-edit)': renders extracted_fields showing extracted_value for each field. Fields where was_corrected: true are highlighted with amber background.
+Panel 3 — 'Final Verified Form': renders extracted_fields showing final_value. Corrected fields shown with green background.
+Metadata Bar
+Below the three panels: record_id (mono font, copyable with clipboard icon), submitted_at, template name, department, clerk name.
+Success state: large green check icon at top, heading 'Record Submitted', sub-text 'Reference: {record_id}'.
+Action
+'Process Another Form' button (Primary): navigates to /upload. This resets session state.
+
+
+Shown when a clerk opts to submit an unknown form as a new template (POST /templates/submit).
+Steps (presented as a step-wizard inside an expanded modal)
+Step 1 — Upload Template Master: clerk uploads a clean, blank copy of the form. Same drag-and-drop widget as main upload.
+Step 2 — Annotate Fields: display the uploaded image. Clerk draws bounding boxes by clicking and dragging over each field region, then types a field name label and selects a data_type. Each annotation is listed in a sidebar. A 'Delete' button on each annotation removes it.
+Step 3 — Metadata: form fields for Form Name, Department (dropdown from available_departments), State (dropdown of Indian states).
+Step 4 — Review & Submit: summary of all annotations. 'Submit for Approval' button calls POST /templates/submit. Shows pending_template_id and message on success.
+
+
+Profile Card
+Avatar (80px circle) with initials or uploaded profile picture.
+Below avatar: Full Name (20px bold), then Username (16px --color-muted).
+Info rows: Department, Position (role: Clerk / Admin).
+Bottom-right: 'Change Password' Secondary button. Opens change-password modal.
+Change Password Modal
+Fields: Old Password, New Password (with password strength indicator), Confirm New Password.
+Same password constraints as Sign Up.
+'Save' button: calls Firebase reauthenticateWithCredential then updatePassword. On success: close modal, show toast 'Password updated successfully.'
+My Template Submissions Tab
+Tab labelled 'My Templates' — calls GET /templates/my-submissions on activation.
+Lists submissions in a table: Form Name | Submitted | Status badge (Pending / Approved / Rejected).
+Rejected rows expand on click to show rejection_reason.
+
+
+4. Admin Panel Specifications
+Admin users land on /admin after login. The admin navbar adds a top navigation bar with section links: Overview · Users · Records · Templates.
+
+Summary Stat Cards (top row, 4 cards)
+Total Clerks · Total Records Submitted · Pending Template Approvals · Records Today
+Each card: metric number (32px bold --color-navy), label (14px --color-muted), small trend indicator.
+Recent Uploads Table
+Source: GET /admin/recent-uploads. Shows one row per clerk.
+Columns: Clerk Name | Template | Department | Submitted At | Original Image (thumbnail link) | Record ID (copyable).
+Row click → navigates to /admin/records/{id}.
+
+
+Source: GET /admin/users?page=1&limit=50. Supports role filter (All / Clerk / Admin) and search by name/email.
+Table columns: Name | Email | Role badge | Joined | Actions.
+Actions column: 'Promote to Admin' or 'Demote to Clerk' button (calls PUT /admin/users/{uid}/role). Confirmation modal required before role change. Admin cannot change own role (button disabled, tooltip: 'You cannot change your own role').
+
+
+Source: GET /admin/records with filter params. Filters: Clerk (dropdown), Template, Department, Date Range (from/to date pickers).
+Paginated table: Record ID | Clerk | Template | Department | Submitted At | Actions.
+'View' button per row → navigates to /admin/records/{id} (same three-panel Overview screen, but admin can view any record).
+
+
+Source: GET /admin/templates/pending. Shows total pending count as a badge on the nav link.
+Each pending template shown as an expanded card: template image (left), metadata + annotated field list (right).
+'Approve' button (green, Secondary): opens a small notes modal, then calls POST /admin/templates/{id}/approve. On success: card collapses with a green success toast.
+'Reject' button (red, Destructive): opens rejection modal with a text area for rejection_reason (required, max 500 chars), then calls POST /admin/templates/{id}/reject.
+
+
+5. Navigation & Back Button Handling
+All pages must handle the browser back button gracefully. The following rules govern history management.
+
+
+6. API Integration Reference
+Base URL: https://api.papertrail.gov.in/v1 (production) · http://localhost:8000/v1 (development). All requests require Authorization: Bearer <firebase_id_token> except POST /auth/register (which uses the newly created token from Firebase sign-up).
+6.1 Authentication Header
+
+6.2 Complete Endpoint Table
+
+6.3 Error Handling Matrix
+
+6.4 Session Management
+session_id is the thread linking all pipeline calls. It is generated by POST /pipeline/preprocess and must be passed to every subsequent call.
+Store session_id in React state (primary) and sessionStorage['pt_session_id'] (fallback for page refresh).
+Sessions expire after 2 hours of inactivity. The frontend must warn the clerk at 90 minutes with a dismissible banner.
+On /pipeline/submit 200 response: clear session_id from state and sessionStorage.
+On navigating away from /upload/review: prompt the clerk ('Leave? Draft will be saved.'), call POST /pipeline/save-draft, then navigate.
+
+6.5 Bounding Box Rendering
+All bounding boxes use relative coordinates (0.0–1.0 as fractions of image dimensions).
+Frontend rendering formula: left = x * imageWidth, top = y * imageHeight, width = w * imageWidth, height = h * imageHeight (all in pixels).
+Implement using an SVG overlay absolutely positioned over the image element.
+Each <rect> in the SVG corresponds to one extracted field.
+Use data-field-id attribute on both the <rect> and the form input to drive the active-field sync via a React state variable (activeFieldId).
+
+
+7. Open Questions Requiring Resolution
+The following items from the PRD have a direct frontend impact. Resolution is required before the specified build phase begins.
+
+8. Frontend Build Phases
+Aligned with the recommended build order in the PRD. Each phase produces a shippable frontend increment testable against the backend team's endpoints.
+
+9. Non-Functional Requirements
+
+10. Appendix — Glossary
+
+— End of Document —

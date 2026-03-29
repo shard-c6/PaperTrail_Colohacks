@@ -34,18 +34,28 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      let token = "";
+      const isMock = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "mock-key";
+      
+      if (!isMock) {
+        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+        token = await userCredential.user.getIdToken();
+      } else {
+        token = data.email.includes('admin') ? 'test_admin_token' : 'test_clerk_token';
+        localStorage.setItem('dev_token', token);
+        await new Promise(r => setTimeout(r, 600)); // Simulate network request for UX
+      }
       
       // Get role from backend
-      const response = await api.get('/auth/me');
-      
-      if (response.data?.success) {
-        setUser(response.data.data);
-        setRole(response.data.data.role);
+      const response = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+
+      if (response.data?.uid) {
+        setUser(response.data);
+        setRole(response.data.role);
         
-        toast.success(`Welcome back, ${response.data.data.name}`);
+        toast.success(`Welcome back, ${response.data.name}`);
         
-        if (response.data.data.role === 'admin') {
+        if (response.data.role === 'admin') {
           router.push('/admin');
         } else {
           router.push('/upload');

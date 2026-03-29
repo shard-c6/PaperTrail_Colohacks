@@ -1,53 +1,73 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Image as ImageIcon, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-
-const mockPendingTemplates = [
-  {
-    id: 'TPL-883',
-    name: 'Vehicle Tax Return',
-    clerk: 'Ramesh Kumar',
-    department: 'Transport',
-    submittedAt: '2026-03-28 14:30',
-    annotatedFields: 8,
-  },
-  {
-    id: 'TPL-885',
-    name: 'Disability Certificate',
-    clerk: 'Anita Singh',
-    department: 'Health',
-    submittedAt: '2026-03-28 16:15',
-    annotatedFields: 12,
-  }
-];
+import { api } from '@/lib/api';
 
 export default function TemplateApprovalPage() {
-  const [templates, setTemplates] = useState(mockPendingTemplates);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const handleApprove = (id: string) => {
-    // Generate embedding mock
-    toast.success('Template Approved. Embedding generated and live.');
-    setTemplates(prev => prev.filter(t => t.id !== id));
+  const fetchPendingTemplates = async () => {
+    try {
+      const res = await api.get('/admin/templates/pending');
+      const mapped = (res.data.pending_templates || []).map((t: any) => ({
+        id: t.template_id,
+        name: t.name,
+        clerk: t.clerk_uid,
+        department: t.department,
+        submittedAt: new Date(t.created_at).toLocaleString(),
+        annotatedFields: t.field_schema?.length || 0,
+      }));
+      setTemplates(mapped);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Failed to fetch pending templates');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = () => {
+  useEffect(() => {
+    fetchPendingTemplates();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await api.post(`/admin/templates/${id}/approve`);
+      toast.success('Template Approved. Embedding generated and live.');
+      setTemplates(prev => prev.filter(t => t.id !== id));
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.response?.data?.detail?.message || 'Approval failed');
+    }
+  };
+
+  const handleReject = async () => {
     if (rejectReason.trim().length < 10) {
       toast.error('Please provide a substantive reason (min 10 chars).');
       return;
     }
-    toast.success('Template Rejected. Clerk notified.');
-    setTemplates(prev => prev.filter(t => t.id !== activeTemplate));
-    setRejectModalOpen(false);
-    setRejectReason('');
+    try {
+      if (activeTemplate) {
+        await api.post(`/admin/templates/${activeTemplate}/reject`, { reason: rejectReason });
+        toast.success('Template Rejected. Clerk notified.');
+        setTemplates(prev => prev.filter(t => t.id !== activeTemplate));
+        setRejectModalOpen(false);
+        setRejectReason('');
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.response?.data?.detail?.message || 'Rejection failed');
+    }
   };
 
   const openRejectModal = (id: string) => {
@@ -62,7 +82,11 @@ export default function TemplateApprovalPage() {
         <p className="text-[var(--color-on-surface-variant)] text-sm">Review clerk-submitted form templates before they are converted to embeddings and go live.</p>
       </div>
 
-      {templates.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center p-12 text-center text-[var(--color-on-surface-variant)]">
+          Loading templates...
+        </div>
+      ) : templates.length === 0 ? (
         <GlassCard className="flex flex-col items-center justify-center p-12 text-center bg-[var(--color-surface-lowest)]/50">
           <CheckCircle size={48} className="text-[var(--color-success)] mb-4" />
           <h3 className="text-xl font-bold font-serif text-white mb-2">All Caught Up</h3>

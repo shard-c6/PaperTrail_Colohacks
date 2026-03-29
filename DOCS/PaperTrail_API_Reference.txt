@@ -1,0 +1,317 @@
+
+API REFERENCE DOCUMENT
+PaperTrail
+Handwritten Government Form Digitisation Pipeline
+
+
+1. Overview
+This document is the authoritative API contract for PaperTrail. Both the backend team (building endpoints) and the frontend team (consuming them) must adhere strictly to the request and response shapes defined here. No field names, types, or status codes may be changed without a versioned update to this document.
+
+1.1  Base URL
+
+During development, the mock server runs at http://localhost:8000/v1. CORS is enabled for all origins in development; locked to the frontend domain in production.
+
+1.2  Authentication
+Every endpoint (except the Firebase-handled auth flows) requires a valid Firebase ID Token passed in the Authorization header:
+
+
+The backend validates the token using Firebase Admin SDK, then reads the role field from Firestore (users/{uid}) to enforce role-based access. Roles: clerk and admin.
+
+1.3  Standard error envelope
+All error responses use the same JSON shape regardless of endpoint:
+
+
+The code field is a machine-readable string the frontend uses to render the correct UI state. The message is human-readable. The details object carries additional context when available (e.g. which field failed validation).
+
+1.4  Bounding box coordinate format
+All bounding boxes throughout the API use relative coordinates — values between 0.0 and 1.0 representing fractions of the image's width or height. This allows the frontend to overlay boxes at any display resolution without recalculation.
+
+
+
+2. Authentication
+Authentication is handled entirely by Firebase Authentication on the client side. The backend never handles raw passwords. The flows below describe what the frontend must do — the backend only receives and validates the resulting Firebase ID token.
+
+2.1  Sign-up
+The frontend calls Firebase Auth's createUserWithEmailAndPassword(email, password) directly. On success, the frontend must immediately call POST /auth/register to create the user record in Firestore with the correct role.
+
+Called by the frontend immediately after a successful Firebase createUserWithEmailAndPassword call. Creates the user document in Firestore. The Firebase ID token from the newly created account must be included.
+Request headers
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+Role is always set to clerk on self-registration. Admin role can only be assigned by an existing admin via PATCH /admin/users/{uid}/role.
+Password validation (max 12 chars, 1 special char, 1 cap, 1 lower, 1 number) is enforced entirely on the frontend before the Firebase call. The backend never sees the password.
+If this endpoint fails after Firebase account creation, the frontend must show an error and prompt the user to contact support. The Firebase account will exist but have no Firestore record.
+
+
+2.2  Login
+Login is handled entirely by Firebase Auth's signInWithEmailAndPassword(email, password) on the frontend. The backend is not involved. On success, Firebase returns an ID token which is attached to all subsequent API requests.
+
+Returns the authenticated user's Firestore record. Called by the frontend on app load to determine which UI to render (clerk dashboard vs admin panel).
+Request headers
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+Frontend should call this once on app initialisation and cache the result in local state.
+
+
+
+3. Form Processing Pipeline
+These endpoints map directly to Layers 1–6 of the backend pipeline. They must be called in order for a single form submission. Each response includes a session_id that links all layers of the same submission together.
+
+
+Accepts a raw form image (scanned or photographed). Applies deskew, CLAHE contrast normalisation, and denoising. Returns a cleaned image URL and a new session_id that must be passed to all subsequent pipeline endpoints for this submission.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+The frontend must display cleaned_image_url to the clerk for visual confirmation before calling /match-template.
+session_id must be stored in frontend state and passed to every subsequent pipeline call.
+original_image_url is stored permanently for the audit record and never modified.
+If skew_corrected_degrees > 10, the frontend should warn the clerk that the image was heavily rotated and ask them to confirm the cleaned result looks correct.
+
+
+
+Generates a visual embedding of the cleaned image and compares it against all approved templates in the database using cosine similarity. Returns the best match if confidence exceeds the threshold (0.80), or a no_match status if no template qualifies.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+When match_status is no_match, the response is still HTTP 200. The frontend detects the no_match status string and shows the template-not-found modal.
+The no_match flow should offer two actions: (1) Submit this form as a new template — calls POST /templates/submit, or (2) Try again with a different image.
+Phase 1 templates in DB: birth_registration_mh_v1, income_certificate_mh_v1, caste_certificate_mh_v1 (SC/ST/OBC variants).
+confidence is exposed to support future UI features (e.g. showing a warning if confidence is between 0.80 and 0.85). Do not show the raw number to the clerk by default.
+
+
+
+Returns the department, form type, and complete field schema for the matched template. The field schema defines all extractable fields, their display labels, data types, and bounding box positions on the template. The clerk can override the department before proceeding.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+available_departments is used to populate the manual override dropdown in the frontend.
+If the clerk overrides the department, the frontend stores the override locally and passes it in the /submit call. The override is logged in the audit record.
+data_type values: text, date, number, aadhaar, pincode, gender_enum, boolean. The frontend uses these to render the correct input type in the editable form.
+
+
+
+Runs Google Cloud Vision OCR on the cleaned image, restricted to each field's bounding box region. Returns a structured extraction result for every field in the template schema, including confidence scores. Fields with confidence below the uncertainty threshold (0.75) are flagged as uncertain.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+uncertain: true is set when confidence < 0.75. This threshold is configurable in backend environment variables (OCR_UNCERTAINTY_THRESHOLD).
+value: null with confidence: 0.0 means the OCR engine found nothing in that field region. The frontend must highlight these fields prominently — they require mandatory clerk attention.
+The frontend uses bounding_box from this response (not from /classify) to draw the highlight overlay on the image in the split view. These coordinates are identical but are included here for convenience so the frontend only needs one object per field.
+summary counts are for frontend display only (e.g. '3 fields need your attention').
+Session expires after 2 hours of inactivity. Frontend should warn the clerk if they have been idle on the review screen.
+
+
+
+Layer 5 is primarily a frontend concern — the split-view review UI. The only backend call in this layer is the save-draft endpoint, which allows the clerk's edits to be preserved if they need to pause and resume.
+
+Persists the clerk's current field edits to Firestore as a draft. Allows the clerk to close the browser and resume review later. Does not trigger any audit log event. Calling save-draft multiple times overwrites the previous draft for the same session_id.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+Frontend should auto-call save-draft every 60 seconds if the clerk has made edits, and on window unload/blur events.
+
+
+
+Finalises the submission. Writes the original extracted data, the clerk's corrected data, and all associated metadata to Firestore as an immutable record. Triggers the audit log entry. Returns the complete record for the Layer 6 final review screen.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+was_corrected: true flags fields where final_value differs from extracted_value. Used by the admin to understand correction patterns.
+This endpoint is idempotent-safe: if the same session_id is submitted twice (e.g. network retry), the second call returns 409 with the existing record_id so the frontend can redirect to the success screen.
+The frontend uses extracted_fields in the response to render the Layer 6 three-panel review: original image, pre-edit form (extracted_value), final form (final_value).
+record_id should be displayed to the clerk as a reference number on the success screen.
+
+
+Returns the full audit record for a submitted form. Clerks can only access their own records. Admins can access any record.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+
+
+4. Template Pipeline
+These endpoints manage the lifecycle of form templates. Clerks submit new templates; admins approve or reject them. Only approved templates are available for matching in Layer 2.
+
+Called when a clerk encounters a no_match in Layer 2 and chooses to submit the form as a new template. The clerk provides the annotated field schema (field names and bounding boxes drawn on the blank master form). The template goes into a pending queue until an admin approves it.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+field_schema is passed as a JSON string in the multipart form because the request also contains a file upload.
+The template is NOT available for matching until an admin approves it via POST /admin/templates/{id}/approve.
+
+
+Returns all template submissions made by the authenticated clerk, with current status (pending / approved / rejected).
+Request headers
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+If status is rejected, rejection_reason contains the admin's note explaining why.
+
+
+
+5. Admin Endpoints
+All endpoints in this section require role: admin. Any clerk attempting to call these endpoints receives 403 Forbidden.
+
+5.1  User Management
+
+Returns all user records from Firestore. Supports optional filtering by role.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+
+Promotes a clerk to admin or demotes an admin to clerk. An admin cannot change their own role.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+
+5.2  Document Oversight
+
+Returns the latest submission record for each clerk. Used by the admin for security oversight — verifying that clerks are processing legitimate forms.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+This returns one record per clerk (their most recent), not all records. For full record history, use GET /admin/records.
+
+
+Full paginated record list for admin audit purposes. Supports filtering by clerk, template, department, and date range.
+Request headers
+
+Parameters
+
+Response body (200 OK)
+
+Error responses
+
+
+5.3  Template Approval
+
+Returns all templates in the pending queue, with the submitting clerk's details and the uploaded template image URL.
+Request headers
+
+Response body (200 OK)
+
+Error responses
+
+
+Approves a pending template submission. The backend generates a visual embedding for the template image and moves the record from templates_pending to templates. The template becomes immediately available for Layer 2 matching.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+Implementation notes
+Embedding generation is synchronous in Phase 1 (acceptable for small template counts). If embedding takes > 10s, the backend should return 202 Accepted and the frontend should poll GET /admin/templates/{id}/status.
+The submitting clerk is notified via a Firestore status update on their templates_pending record, which the frontend can listen to in real time.
+
+
+Rejects a pending template. The rejection_reason is stored and surfaced to the submitting clerk via GET /templates/my-submissions.
+Request headers
+
+Parameters
+
+Request body (JSON)
+
+Response body (200 OK)
+
+Error responses
+
+
+
+6. Phase 1 Template Reference
+The following three templates are pre-loaded in the database at launch. These are the only templates available for Layer 2 matching in Phase 1. Additional templates are added via the admin approval flow.
+
+
+Note: Caste Certificate OBC and ST variants (tmpl_caste_cert_obc_mh_v1, tmpl_caste_cert_st_mh_v1) share the same field schema as the SC variant but differ in layout. They will be added as separate templates in Phase 1.5.
+
+7. Quick Reference — All Endpoints
+

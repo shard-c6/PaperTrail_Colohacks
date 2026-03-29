@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Eye, CheckCircle2, Clock, Filter, Ban, Download } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
+import { api } from '@/lib/api';
 
 // Share exact mock from clerk dashboard for global view
 const mockRecords = [
@@ -16,10 +17,37 @@ const mockRecords = [
 
 export default function AdminRecordsPage() {
   const [filter, setFilter] = useState('all');
+  const [records, setRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const res = await api.get('/admin/records?page_size=100');
+        if (res.data?.records) {
+           const formatted = res.data.records.map((r: any) => ({
+             id: r.record_id,
+             clerk: r.clerk_name || r.clerk_uid,
+             template: r.template_name || 'Verification Pending',
+             dept: r.department || 'N/A',
+             date: new Date(r.submitted_at).toLocaleString(),
+             status: 'verified', // All records submitted are inherently verified in this system
+             accuracy: 'N/A' // Could be updated based on confidence if needed
+           }));
+           setRecords(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to fetch records:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecords();
+  }, []);
 
   const filteredRecords = filter === 'all' 
-    ? mockRecords 
-    : mockRecords.filter(r => r.status.includes(filter));
+    ? records 
+    : records.filter(r => r.status.includes(filter));
 
   const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
@@ -86,7 +114,13 @@ export default function AdminRecordsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-ghost-border)]">
-              {filteredRecords.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-on-surface-variant)]">
+                    Loading records from database...
+                  </td>
+                </tr>
+              ) : filteredRecords.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-on-surface-variant)]">
                     No records found matching "{filter}".

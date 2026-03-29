@@ -1,24 +1,68 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-
-const summaryStats = [
-  { label: 'Total Clerks', value: '45', icon: Users, trend: '+3 this week' },
-  { label: 'Total Records Submitted', value: '1,280', icon: FileText, trend: '+14% month-over-month' },
-  { label: 'Pending Approvals', value: '3', icon: Clock, trend: 'Action required' },
-  { label: 'Records Today', value: '112', icon: CheckCircle, trend: 'On track' }
-];
-
-const mockRecentUploads = [
-  { id: 'REC-001', clerk: 'Ramesh Kumar', template: 'Registration Form v2', dept: 'Revenue', time: '10 mins ago' },
-  { id: 'REC-002', clerk: 'Anita Singh', template: 'ID Application', dept: 'Transport', time: '25 mins ago' },
-  { id: 'REC-003', clerk: 'Ramesh Kumar', template: 'Tax Declaration', dept: 'Revenue', time: '1 hour ago' },
-  { id: 'REC-004', clerk: 'Vikram Mehta', template: 'Passport App Page 2', dept: 'Foreign Affairs', time: '2 hours ago' },
-];
+import { api } from '@/lib/api';
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    users: 0,
+    records: 0,
+    pending: 0,
+    today: 0,
+  });
+  const [recentUploads, setRecentUploads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [usersRes, recordsRes, pendingRes, latestRes] = await Promise.all([
+          api.get('/admin/users'),
+          api.get('/admin/records?page_size=1'), // Fetch 1 record to get the 'total' parameter
+          api.get('/admin/templates/pending'),
+          api.get('/admin/documents/latest')
+        ]);
+
+        setStats({
+          users: usersRes.data.users?.length || 0,
+          records: recordsRes.data.total || 0,
+          pending: pendingRes.data.pending_templates?.length || 0,
+          today: 0, // Mock today's count for this hackathon version
+        });
+
+        // The latest documents returns records per clerk
+        const latestDocs = latestRes.data.entries || [];
+        // Map backend LatestDocumentEntry to our table format
+        const uploads = latestDocs
+          .filter((entry: any) => entry.record_id)
+          .map((entry: any) => ({
+            id: entry.record_id,
+            clerk: entry.clerk_name || entry.clerk_uid,
+            template: entry.template_name || 'N/A',
+            dept: 'Various', // Department not readily available in LatestDocumentEntry
+            time: new Date(entry.submitted_at).toLocaleString(),
+          }));
+        
+        setRecentUploads(uploads);
+      } catch (error) {
+        console.error("Dashboard fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  const summaryStats = [
+    { label: 'Total Users', value: stats.users.toString(), icon: Users, trend: 'All Accounts' },
+    { label: 'Total Records Submitted', value: stats.records.toString(), icon: FileText, trend: 'Global submissions' },
+    { label: 'Pending Approvals', value: stats.pending.toString(), icon: Clock, trend: stats.pending > 0 ? 'Action required' : 'All caught up' },
+    { label: 'Records Today', value: '112', icon: CheckCircle, trend: 'On track' } // Static mock for now
+  ];
+
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
       <div>
@@ -33,12 +77,14 @@ export default function AdminDashboard() {
               <div className="w-10 h-10 rounded-full bg-[var(--color-surface-highest)] flex items-center justify-center text-[var(--color-primary)]">
                 <stat.icon size={20} />
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${stat.label === 'Pending Approvals' ? 'bg-[var(--color-warning)]/20 text-[var(--color-warning)] font-bold' : 'bg-[var(--color-surface-low)] text-[var(--color-on-surface-variant)]'}`}>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${stat.label === 'Pending Approvals' && stats.pending > 0 ? 'bg-[var(--color-warning)]/20 text-[var(--color-warning)] font-bold' : 'bg-[var(--color-surface-low)] text-[var(--color-on-surface-variant)]'}`}>
                 {stat.trend}
               </span>
             </div>
             <div>
-              <h3 className="text-3xl font-bold font-mono text-white mb-1">{stat.value}</h3>
+              <h3 className="text-3xl font-bold font-mono text-white mb-1">
+                {loading ? '...' : stat.value}
+              </h3>
               <p className="text-sm font-medium text-[var(--color-on-surface-variant)]">{stat.label}</p>
             </div>
           </GlassCard>
@@ -46,7 +92,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-12">
-        <h3 className="text-xl font-serif font-bold text-white mb-4">Recent Uploads</h3>
+        <h3 className="text-xl font-serif font-bold text-white mb-4">Latest Submissions per Clerk</h3>
         <GlassCard className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -61,18 +107,32 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-ghost-border)]">
-                {mockRecentUploads.map((record) => (
-                  <tr key={record.id} className="hover:bg-[var(--color-surface-highest)]/20 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm font-semibold text-white">{record.id}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--color-on-surface)]">{record.clerk}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.template}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.dept}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.time}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="sm">Details</Button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--color-on-surface-variant)]">
+                      Loading latest records...
                     </td>
                   </tr>
-                ))}
+                ) : recentUploads.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--color-on-surface-variant)]">
+                      No recent submissions found.
+                    </td>
+                  </tr>
+                ) : (
+                  recentUploads.map((record, i) => (
+                    <tr key={i} className="hover:bg-[var(--color-surface-highest)]/20 transition-colors">
+                      <td className="px-6 py-4 font-mono text-sm font-semibold text-white">{record.id}</td>
+                      <td className="px-6 py-4 text-sm text-[var(--color-on-surface)]">{record.clerk}</td>
+                      <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.template}</td>
+                      <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.dept}</td>
+                      <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.time}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Button variant="ghost" size="sm">Details</Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -82,3 +142,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

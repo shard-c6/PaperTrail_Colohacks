@@ -52,25 +52,22 @@ export default function UploadPage() {
 
     setUploading(true);
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
 
     try {
-      const response = await api.post('/pipeline/upload', formData, {
+      const response = await api.post('/pipeline/preprocess', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      if (response.data?.success) {
-        setSessionId(response.data.data.session_id);
+      if (response.data && response.data.session_id) {
+        setSessionId(response.data.session_id);
         toast.success('Document uploaded successfully');
-        router.push('/upload/preprocess'); // Or wherever the pipeline goes next
+        router.push('/upload/preprocess');
       } else {
-        throw new Error('Upload failed');
+        throw new Error('Upload failed: Invalid response from server');
       }
     } catch (error: any) {
-      // Mock flow if backend is totally down
-      toast.success('Mock API: Upload Simulated.');
-      setSessionId('pt_mock_session_123');
-      router.push('/upload/preprocess');
+      toast.error(error.message || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
     }

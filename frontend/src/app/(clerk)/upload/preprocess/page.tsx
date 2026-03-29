@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 
 export default function PreprocessPage() {
   const router = useRouter();
-  const { sessionId } = useAppStore();
+  const { sessionId, setPipelineData } = useAppStore();
   const [status, setStatus] = useState<'analyzing' | 'cleaning' | 'mapping' | 'ready'>('analyzing');
   const [progress, setProgress] = useState(0);
 
@@ -23,22 +23,39 @@ export default function PreprocessPage() {
       return;
     }
 
-    // Mock progress since we don't have a real websocket yet
-    let interval: NodeJS.Timeout;
-    
-    interval = setInterval(() => {
-      setProgress((p) => {
-        if (p < 30) { setStatus('analyzing'); return p + 10; }
-        if (p < 70) { setStatus('cleaning'); return p + 5; }
-        if (p < 100) { setStatus('mapping'); return p + 2; }
-        clearInterval(interval);
-        setStatus('ready');
-        return 100;
-      });
-    }, 200);
+    const runPipeline = async () => {
+      try {
+        // Step 1: Match Template
+        setStatus('analyzing');
+        setProgress(25);
+        await api.post('/pipeline/match-template', { session_id: sessionId });
 
-    return () => clearInterval(interval);
-  }, [sessionId, router]);
+        // Step 2: Classify & Extract Schema
+        setStatus('mapping');
+        setProgress(60);
+        const classifyRes = await api.get(`/pipeline/classify/${sessionId}`);
+        
+        // Step 3: Extract data explicitly using OCR
+        setStatus('cleaning');
+        setProgress(85);
+        const extractRes = await api.post(`/pipeline/extract/${sessionId}`);
+        
+        // Persist to store
+        setPipelineData({
+          templateSchema: classifyRes.data?.fields || [],
+          extractedFields: extractRes.data?.fields || [],
+        });
+
+        setProgress(100);
+        setStatus('ready');
+      } catch (error: any) {
+        toast.error(error.response?.data?.detail?.message || 'Pipeline failed. Please try again.');
+        router.push('/upload');
+      }
+    };
+
+    runPipeline();
+  }, [sessionId, router, setPipelineData]);
 
   const handleContinue = () => {
     router.push('/upload/review');

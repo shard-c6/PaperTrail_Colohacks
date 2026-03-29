@@ -1,0 +1,154 @@
+PaperTrail
+MVP Voice & Accessibility Layer
+Change Specification — DB, API & Feature Design
+
+
+1. Overview
+This document specifies the minimal, additive changes required to implement PaperTrail’s Voice & Accessibility Layer on top of the existing PRD v1.0 pipeline. Nothing in the existing API contract or Firestore schema is removed or renamed. All changes are backward-compatible.
+
+
+The three capabilities introduced:
+Voice playback — uncertain fields read aloud in clerk’s preferred language using Web Speech API
+Language preference — per-clerk setting stored in Firestore, applied to all voice interactions
+AI voice agent — clerk speaks a question about the current form; Claude answers in the clerk’s language
+
+2. Database Changes (Firestore)
+Only the users collection is modified. No other collection requires changes. The voice feature is a frontend + thin API concern — all field data, confidence scores, and bounding boxes it needs already exist in the /extract response.
+
+2.1  users Collection — 3 New Fields
+Add the following three fields to every user document at account creation. Existing documents receive these fields the first time the clerk saves preferences via PATCH /users/me/preferences.
+
+
+
+3. API Changes
+Two existing endpoints receive minor additive changes. Two new endpoints are introduced. Zero existing endpoints are modified in a breaking way.
+
+3.1  POST /auth/register  — Accept Language Preference
+The registration endpoint already accepts name and email. Add one optional field: preferred_language.
+
+Request Body Changes
+
+Example Request
+{
+  "name": "Ramesh Kumar",
+  "email": "ramesh.kumar@gov.in",
+  "preferred_language": "hi-IN"
+}
+
+New Error Code
+
+3.2  GET /auth/me  — Return Voice Preferences
+The /auth/me response already returns uid, name, email, role, and created_at. Add the three new user fields to the response data object. No request changes needed.
+
+Updated Response data Object
+{
+  "uid": "firebase_uid_abc123",
+  "name": "Ramesh Kumar",
+  "email": "ramesh.kumar@gov.in",
+  "role": "clerk",
+  "created_at": "2026-03-28T10:00:00Z",
+  "preferred_language": "hi-IN",       // NEW
+  "voice_mode_enabled": true,           // NEW
+  "voice_agent_enabled": false          // NEW
+}
+
+
+3.3  PATCH /users/me/preferences  — New Endpoint
+Allows a clerk to update their voice preferences from a settings screen without re-registering. All fields are optional — only send what changed. Backend performs a partial Firestore update on users/{uid}.
+
+
+Request Body
+{
+  "preferred_language": "mr-IN",    // optional
+  "voice_mode_enabled": true,        // optional
+  "voice_agent_enabled": true        // optional
+}
+
+Response — 200 OK
+{
+  "success": true,
+  "data": {
+    "preferred_language": "mr-IN",
+    "voice_mode_enabled": true,
+    "voice_agent_enabled": true
+  }
+}
+
+Error Responses
+
+3.4  POST /voice/agent  — New Endpoint
+The AI voice agent endpoint. The frontend sends the clerk’s transcribed question alongside the current form’s extracted fields. The backend constructs a scoped Claude prompt and returns a short spoken answer. The frontend feeds this text into the Web Speech API (speechSynthesis) so the clerk hears the response.
+
+
+Request Body
+
+Example Request
+{
+  "session_id": "sess_20260328_abc123",
+  "question": "Aadhaar number kyun highlight hai?",
+  "language": "hi-IN",
+  "extracted_fields": [
+    {
+      "field_id": "aadhaar_number",
+      "label": "Aadhaar Number",
+      "value": "7890 1234 56",
+      "confidence": 0.48,
+      "uncertain": true,
+      "bounding_box": { "x": 0.12, "y": 0.50, "w": 0.40, "h": 0.05 }
+    }
+  ]
+}
+
+Response — 200 OK
+{
+  "success": true,
+  "data": {
+    "answer": "Aadhaar number highlight hai kyunki system ko is field ko padhne mein sirf 48% confidence hai. Kripya image mein dekhkar verify karein.",
+    "language": "hi-IN",
+    "field_referenced": "aadhaar_number"
+  }
+}
+
+field_referenced is the field_id the agent determined was most relevant to the clerk’s question. The frontend uses this to flash the corresponding bounding box on the image panel, keeping visual and audio in sync.
+
+Error Responses
+
+Backend Implementation Notes
+The Claude system prompt must include: the template name, all extracted_fields with their confidence scores, the clerk’s language, and a strict instruction to answer only about this form in 1–2 sentences.
+field_referenced is determined by parsing Claude’s response for field_id matches against the extracted_fields array. If no match, return null — the frontend skips the bounding box flash.
+Do not log the clerk’s spoken question or Claude’s answer to Firestore. This endpoint is stateless.
+The session_id guard prevents the agent from being invoked after a form is already submitted (session will be marked as submitted in Firestore).
+
+4. Frontend Responsibilities (No Backend Changes Required)
+The following voice behaviours are implemented entirely on the frontend using the Web Speech API. No additional backend endpoints are needed for these.
+
+4.1  Voice Playback (speechSynthesis)
+On review screen load, if voice_mode_enabled is true, read the summary count aloud: “[N] fields need your attention.”
+Then read each uncertain field in order: field label first, then the extracted value, then a prompt to verify.
+Use lang: preferred_language in the SpeechSynthesisUtterance for correct pronunciation.
+Null-value fields (confidence: 0.0) are read first, before low-confidence fields.
+
+4.2  Speech-to-Text (SpeechRecognition)
+Mic button is only shown if voice_agent_enabled is true.
+On mic press, start SpeechRecognition with lang: preferred_language.
+On transcript received, POST to /voice/agent with the transcript and current extracted_fields from state.
+On response, feed answer text into speechSynthesis and flash the bounding box for field_referenced.
+
+4.3  Settings Screen
+Language selector: English / हिंदी / मराठी — maps to en-IN / hi-IN / mr-IN.
+Two toggles: Voice Playback and Voice Agent.
+On save, call PATCH /users/me/preferences and update local state.
+Language selector should also be available at sign-up (maps to preferred_language in POST /auth/register).
+
+5. Change Summary
+
+5.1  What Changes
+
+5.2  What Does NOT Change
+All existing pipeline endpoints: /preprocess, /match-template, /classify, /extract, /save-draft, /submit, /record/{id}
+All admin endpoints
+All template pipeline endpoints
+records, templates, templates_pending, audit_log Firestore collections
+Firebase Auth configuration
+Bounding box coordinate format (relative, unchanged)
+

@@ -1,0 +1,87 @@
+# Phase 3 & 4 Implementation Plan
+
+This plan documents the strategy for integrating the backend API with the Admin Dashboard logic, as well as the newly requested MVP Voice & Accessibility features for the Clerk journey.
+
+## User Review Required
+
+> [!WARNING]
+> Please review this plan carefully as we are implementing the final API hooks for Admin configuration and jumping right into the complex Voice integration involving the Web Speech APIs.
+
+## Proposed Changes
+
+### 1. Phase 3: Admin Integration 
+
+The Admin interface currently pulls from hardcoded mocks. We will dynamically string these to the `/v1/admin` FastApi router endpoints.
+
+#### [MODIFY] [admin/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/admin/page.tsx)
+- Fetch `GET /v1/admin/documents/latest` rather than `mockRecentUploads` to view recent documents scanned by clerks across the system.
+- Map the endpoint's response elements representing `clerk_uid`, `template_name`, and `submitted_at` into the global oversight table.
+
+#### [MODIFY] [admin/users/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/admin/users/page.tsx)
+- Pull all system users from `GET /v1/admin/users`.
+- Wire the "Promote" and "Demote" buttons cleanly to `PATCH /v1/admin/users/{uid}/role`.
+
+#### [MODIFY] [admin/templates/pending/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/admin/templates/pending/page.tsx)
+- Replace pending queue mocks with `GET /v1/admin/templates/pending`.
+- Attach `POST /v1/admin/templates/{id}/approve` to the Approve actions.
+- Attach `POST /v1/admin/templates/{id}/reject` (taking the reason payload) into the rejection modal.
+
+#### [MODIFY] [admin/records/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/admin/records/page.tsx)
+- Provide access to all historical records via `GET /v1/admin/records`.
+
+---
+
+### 2. Phase 4: Voice & Accessibility MVP 
+
+The MVP requirement involves adding the Web Speech API securely onto our Clerk application state, and pointing it towards the `POST /v1/voice/agent` router you created via Claude integration.
+
+#### [MODIFY] [store/useAppStore.ts](file:///c:/PaperTrail_Colohacks/frontend/src/store/useAppStore.ts)
+- Extend `UserProfile` to support `preferred_language`, `voice_mode_enabled`, and `voice_agent_enabled`.
+
+#### [MODIFY] [(auth)/signup/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/(auth)/signup/page.tsx)
+- Embed a dropdown to select the `preferred_language` on Registration (e.g. English `en-IN`, Hindi `hi-IN`). Pass this dynamically with `POST /v1/auth/register`.
+
+#### [MODIFY] [(clerk)/settings/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/(clerk)/settings/page.tsx) (Assuming existence or will add to Layout)
+- We will construct the UI for Clerks to patch their configurations to `PATCH /v1/users/me/preferences`.
+
+#### [MODIFY] [(clerk)/upload/review/page.tsx](file:///c:/PaperTrail_Colohacks/frontend/src/app/(clerk)/upload/review/page.tsx)
+- **TTS**: If `voice_mode_enabled` is active, we trigger `window.speechSynthesis` natively telling the user how many low-confidence fields require their checking.
+- **STT**: Display a Microphone UI on screen if `voice_agent_enabled`. Uses HTML `SpeechRecognition` translating spoken words up to `POST /v1/voice/agent` alongside our `extracted_fields`. It will play audio of the Claude-responded guidance in the set language and flash bounding boxes matching `field_referenced`!
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. The Voice logic requires a user's microphone permissions in the browser (`navigator.mediaDevices.getUserMedia`). Are you comfortable with prompting upon reviewing a document? 
+> 2. For the `settings/page.tsx` configuration for Voice Toggles, should I create a whole new visual settings page in the Clerk Dashboard, or add those directly to the Navigation Header dropdown profile icon?
+
+## Verification Plan
+
+### Automated Tests
+- Test endpoints locally using manual navigation.
+- Write a unit test script for the `matching.py` pipeline to ensure HOG vectors match correctly against the seeded templates.
+
+### Manual Verification
+1. Access the Admin Dashboard `/admin` and manipulate user permissions dynamically.
+2. Sign-in as a Clerk to test Web Speech logic and ensure bounding-boxes actively "flash" when queried through Claude's response referencing `field_id`.
+3. Upload documents as a Clerk and verify that the 2-stage matching (HOG + Ollama) correctly identifies the template, even rejecting severely misaligned forms.
+
+---
+
+### 3. Phase 5: ML Template Matching Layer (HOG + Ollama Fallback)
+
+We will implement a 2-stage Machine Learning pipeline for matching uploaded forms to approved templates, creating a robust 5-layer AI architecture overall.
+
+#### [MODIFY] [backend/requirements.txt](file:///c:/PaperTrail_Colohacks/backend/requirements.txt)
+- Add `scikit-learn` to the requirements for fast Cosine Similarity calculations and HOG feature vector comparisons.
+
+#### [MODIFY] [backend/services/matching.py](file:///c:/PaperTrail_Colohacks/backend/services/matching.py)
+- **Stage 1 (HOG + Cosine Similarity):** Compute HOG (Histogram of Oriented Gradients) feature vectors for incoming documents via OpenCV. Compare this vector against pre-computed `.npy` vectors for our seeded templates using `cosine_similarity` from `scikit-learn`.
+- **Stage 2 (LLM Verification via Ollama):** If the cosine similarity score is borderline or ambiguous, extract the top 30% of the image text via OCR and pass it to our local `deepseek-r1:1.5b` model via Ollama to confirm which of the 3 templates it most likely matches.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. Should we run the deepseek-r1 classification synchronously during the upload request, or park it as a background task if HOG certainty is too low?
+> 2. Do you have the three template reference images readily available in the workspace so I can generate their `.npy` HOG vectors before we test?
+
+Please explicitly approve this plan so we can `pip install scikit-learn` and begin writing the fallback logic!

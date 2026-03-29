@@ -13,9 +13,23 @@ export const api = axios.create({
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
-    const token = await user.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    } catch (e) {
+      // Ignored: fallback to dev token if token fetching fails
+    }
   }
+  
+  // Dev Bypass Fallback
+  if (typeof window !== 'undefined') {
+    const devToken = localStorage.getItem('dev_token');
+    if (devToken) {
+      config.headers.Authorization = `Bearer ${devToken}`;
+    }
+  }
+
   return config;
 }, (error) => {
   return Promise.reject(error);

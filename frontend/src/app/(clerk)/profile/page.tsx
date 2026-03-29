@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import PasswordStrengthBar from '@/components/auth/PasswordStrengthBar';
 import { useAppStore } from '@/store/useAppStore';
+import { api } from '@/lib/api';
 
 // Password Schema matching signup rules
 const passwordSchema = z.object({
@@ -40,9 +41,18 @@ const mockTemplates = [
 ];
 
 export default function ProfilePage() {
-  const { user, role } = useAppStore();
+  const { user, role, setUser } = useAppStore();
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  
+  // Local state for prefs
+  const [prefs, setPrefs] = useState({
+    preferred_language: user?.preferred_language || 'en-IN',
+    voice_mode_enabled: user?.voice_mode_enabled || false,
+    voice_agent_enabled: user?.voice_agent_enabled || false,
+  });
 
   const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm<PasswordForm>({
     resolver: zodResolver(passwordSchema),
@@ -56,6 +66,26 @@ export default function ProfilePage() {
     toast.success('Password updated successfully.');
     setPasswordModalOpen(false);
     reset();
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
+    try {
+      const response = await api.patch('/users/me/preferences', prefs);
+      if (response.data.success) {
+        toast.success("Preferences updated successfully");
+        if (user) {
+          setUser({
+            ...user,
+            ...response.data.data
+          });
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail?.message || "Failed to update preferences");
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
   const toggleRow = (id: string) => {
@@ -111,6 +141,70 @@ export default function ProfilePage() {
           </Button>
         </div>
       </GlassCard>
+
+      {/* Voice & Accessibility Preferences */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-serif font-bold text-white">Voice & Accessibility</h3>
+          <Button variant="primary" size="sm" onClick={handleSavePreferences} isLoading={savingPrefs}>
+            Save Preferences
+          </Button>
+        </div>
+
+        <GlassCard className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-on-surface-variant)] mb-2">Preferred Application Language</label>
+                <select 
+                  value={prefs.preferred_language}
+                  onChange={(e) => setPrefs(prev => ({ ...prev, preferred_language: e.target.value }))}
+                  className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none appearance-none"
+                >
+                  <option value="en-IN" className="bg-[#121A20]">English (India)</option>
+                  <option value="hi-IN" className="bg-[#121A20]">Hindi (India)</option>
+                  <option value="mr-IN" className="bg-[#121A20]">Marathi (India)</option>
+                </select>
+                <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">This affects translation labels, playback voice modules, and the AI agent language base.</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <input
+                    type="checkbox"
+                    id="voiceModeToggle"
+                    className="w-4 h-4 accent-[var(--color-primary)] rounded"
+                    checked={prefs.voice_mode_enabled}
+                    onChange={(e) => setPrefs(prev => ({ ...prev, voice_mode_enabled: e.target.checked }))}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="voiceModeToggle" className="block text-sm font-medium text-white cursor-pointer mb-1">Text-to-Speech (TTS) Announcements</label>
+                  <p className="text-xs text-[var(--color-on-surface-variant)]">If enabled, the verification page will automatically read aloud required focus points or validation anomalies.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <input
+                    type="checkbox"
+                    id="voiceAgentToggle"
+                    className="w-4 h-4 accent-[var(--color-primary)] rounded"
+                    checked={prefs.voice_agent_enabled}
+                    onChange={(e) => setPrefs(prev => ({ ...prev, voice_agent_enabled: e.target.checked }))}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="voiceAgentToggle" className="block text-sm font-medium text-white cursor-pointer mb-1">Enable AI Voice Agent</label>
+                  <p className="text-xs text-[var(--color-on-surface-variant)]">Activates the microphone button in the verifier. Ask questions about the current record, and the assistant will reply in your preferred language.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </div>
 
       {/* Templates Section */}
       <div className="mt-12">

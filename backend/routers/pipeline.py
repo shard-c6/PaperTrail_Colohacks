@@ -110,7 +110,7 @@ async def match_template_endpoint(
     user: dict = Depends(get_current_user),
 ):
     session = _get_session(body.session_id)
-    result = match_template(session["cleaned_image_url"])
+    result = await match_template(session["cleaned_image_url"])
 
     # Update session
     db.collection("sessions").document(body.session_id).update({

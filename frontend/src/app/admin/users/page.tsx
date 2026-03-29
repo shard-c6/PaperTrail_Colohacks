@@ -1,29 +1,50 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Shield, Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-
-const mockUsers = [
-  { uid: 'USR-101', name: 'Alok Nath', email: 'alok.admin@gov.in', role: 'admin', joined: '2026-01-10' },
-  { uid: 'USR-102', name: 'Ramesh Kumar', email: 'ramesh.clerk@gov.in', role: 'clerk', joined: '2026-02-15' },
-  { uid: 'USR-103', name: 'Anita Singh', email: 'anita.c@gov.in', role: 'clerk', joined: '2026-02-18' },
-  { uid: 'USR-104', name: 'Vikram Mehta', email: 'v.mehta@gov.in', role: 'clerk', joined: '2026-03-05' },
-];
+import { api } from '@/lib/api';
+import useAppStore from '@/store/useAppStore';
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<any[]>([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  
+  const currentUser = useAppStore(state => state.user);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/admin/users');
+      // map backend UserResponse to table
+      const fetchedUsers = (res.data.users || []).map((u: any) => ({
+        uid: u.uid,
+        name: u.name || 'Unknown',
+        email: u.email || 'N/A',
+        role: u.role,
+        joined: new Date(u.created_at).toLocaleDateString()
+      }));
+      setUsers(fetchedUsers);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = filter === 'all' 
     ? users 
     : users.filter(u => u.role === filter);
 
-  const handleRoleChange = (uid: string, currentRole: string) => {
-    // Cannot change own role typically, mock simulation:
-    if (uid === 'USR-101') {
+  const handleRoleChange = async (uid: string, currentRole: string) => {
+    if (uid === currentUser?.uid) {
       toast.error('You cannot change your own role.');
       return;
     }
@@ -32,10 +53,16 @@ export default function AdminUsersPage() {
     const confirmMsg = `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} this user to ${newRole}?`;
     
     if (window.confirm(confirmMsg)) {
-      setUsers(prev => prev.map(u => 
-        u.uid === uid ? { ...u, role: newRole } : u
-      ));
-      toast.success(`User role updated to ${newRole}`);
+      try {
+        await api.patch(`/admin/users/${uid}/role`, { new_role: newRole });
+        setUsers(prev => prev.map(u => 
+          u.uid === uid ? { ...u, role: newRole } : u
+        ));
+        toast.success(`User role updated to ${newRole}`);
+      } catch (e: any) {
+        console.error(e);
+        toast.error(e.response?.data?.detail?.message || 'Failed to update role');
+      }
     }
   };
 
@@ -87,7 +114,19 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-ghost-border)]">
-              {filteredUsers.map((u) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-[var(--color-on-surface-variant)]">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-[var(--color-on-surface-variant)]">
+                    No users found.
+                  </td>
+                </tr>
+              ) : filteredUsers.map((u) => (
                 <tr key={u.uid} className="hover:bg-[var(--color-surface-high)]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -119,8 +158,8 @@ export default function AdminUsersPage() {
                       size="sm" 
                       onClick={() => handleRoleChange(u.uid, u.role)}
                       className="text-xs h-8 px-3"
-                      disabled={u.uid === 'USR-101'}
-                      title={u.uid === 'USR-101' ? "You cannot change your own role" : ""}
+                      disabled={u.uid === currentUser?.uid}
+                      title={u.uid === currentUser?.uid ? "You cannot change your own role" : ""}
                     >
                       <ArrowUpDown size={14} className="mr-1.5" />
                       {u.role === 'admin' ? 'Demote to Clerk' : 'Promote to Admin'}

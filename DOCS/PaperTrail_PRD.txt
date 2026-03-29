@@ -1,0 +1,221 @@
+
+PRODUCT REQUIREMENTS DOCUMENT
+PaperTrail
+Handwritten Government Form Digitisation, Extraction, and Intelligent Routing Pipeline
+
+
+
+1. Executive Summary
+Across government offices in India, thousands of handwritten forms are processed manually every day — applications for certificates, registrations, and public services. Clerks read handwritten entries and type them into systems manually. This process is slow, error-prone, and inconsistent; a misread name or number can cause delays, rejections, or incorrect records.
+
+PaperTrail is a practical, assistive AI pipeline that digitises handwritten government forms through a structured multi-layer workflow. The system accelerates data entry without replacing human judgement — it extracts text using OCR, flags uncertain fields, and presents a clean interface for a human operator to verify and correct data before final submission.
+
+The emphasis is on designing a system that effectively combines automated extraction with human verification in a clear and usable way. Accuracy of OCR is not the primary focus; workflow design is.
+
+2. Problem Statement
+2.1 Background
+Current state in government data entry:
+Forms are received in physical handwritten format daily at scale.
+Clerks manually read and re-type data — introducing transcription errors.
+OCR tools exist but are not reliable for handwriting, especially in regional languages (Hindi, Marathi).
+There is no existing feedback mechanism to flag uncertain OCR output; operators blindly trust extraction results.
+Audit trails and traceability are absent in most legacy systems.
+
+2.2 Core Challenge
+The real challenge is not extracting text from images — it is knowing when the system might be wrong, and allowing a human to quickly verify and correct the output before it is finalised. PaperTrail solves this by making uncertainty visible and actionable.
+
+3. Objectives
+Build an application that:
+Accepts a scanned image or mobile photograph of a handwritten or partially filled government form based on a predefined template.
+Preprocesses the image to handle real-world imperfections (skew, lighting, noise).
+Matches the form to a known template in the database using visual embedding similarity.
+Classifies the form into a department or category and routes it accordingly.
+Extracts key fields using OCR and maps them to the correct template field positions.
+Highlights fields with low extraction confidence and presents them alongside the cleaned image for human review.
+Allows the operator to manually edit uncertain fields before confirming submission.
+Stores a complete audit record: original image, pre-edit extracted form, and final corrected form.
+Provides an Admin panel for user management, document oversight, and template approval.
+
+4. User Roles & Permissions
+
+
+5. Layer 0 — Authentication
+5.1 Technology
+Firebase Authentication (email/password only). Google Sign-In and other social providers are explicitly excluded.
+
+5.2 Sign Up Flow
+Required fields:
+Full name
+Email address
+Password (see constraints below)
+Confirm password
+
+Password constraints:
+Maximum 12 characters
+At least 1 uppercase letter
+At least 1 lowercase letter
+At least 1 number
+Exactly 1 special character (only one, not zero, not two or more)
+
+5.3 Log In Flow
+Fields: email, password. Forgot password link triggers Firebase password reset email.
+
+5.4 Role Assignment
+Role (clerk / admin) is stored in Firestore under the users collection, keyed by Firebase UID. Backend middleware reads this field on every protected request to enforce access control. Roles are assigned at account creation time by an admin.
+
+6. Core Processing Pipeline
+The pipeline processes one form submission through six sequential layers. Each layer's output becomes the next layer's input.
+
+
+6.1 Input
+A scanned image or mobile photograph of a handwritten government form. Accepted formats: JPG, PNG, PDF (first page). Maximum file size: 10 MB.
+
+6.2 Processing
+Deskew: detect and correct rotation up to ±15 degrees using Hough line transform.
+Denoise: apply Gaussian blur followed by adaptive thresholding to reduce noise.
+Contrast normalisation: CLAHE (Contrast Limited Adaptive Histogram Equalisation) to handle uneven lighting and shadow.
+Resize and normalise: standardise resolution to 300 DPI for OCR compatibility.
+
+6.3 Output
+Cleaned image displayed to the clerk for visual confirmation before extraction proceeds. The clerk must explicitly confirm readability. If the image is unacceptable, the clerk can re-upload without proceeding.
+
+6.4 Key Implementation Note
+The cleaned image URL is persisted in Firebase Storage and passed as input to all subsequent layers. The original unmodified image is also stored permanently for the audit record.
+
+
+6.5 Purpose
+Identify which predefined form template the uploaded image corresponds to. This is a visual similarity search, not text-based matching.
+
+6.6 Process
+Generate an embedding of the cleaned image using a pretrained visual model (CLIP or ResNet-50 recommended).
+Compute cosine similarity against all stored template embeddings in the database.
+If the top match exceeds the confidence threshold (configurable, default: 0.80), proceed to Layer 3 with the matched template ID.
+If no match exceeds the threshold, display a modal to the clerk: Template not found. Would you like to submit this as a new template for admin approval?
+If yes: route to the Template Submission Pipeline (see Section 8).
+If no: allow the clerk to re-upload a different image.
+
+6.7 Database — Templates Collection
+Each template record stores: template ID, form name, department, field schema (array of field definitions with bounding box coordinates), embedding vector, approved_by (admin UID), and created_at timestamp.
+
+
+6.8 Purpose
+Assign the matched form to a department or category for routing purposes.
+
+6.9 Process
+The matched template's metadata already contains department and form type. This is the default classification.
+Display the classification clearly to the clerk: form name, department, and category.
+Allow manual override: the clerk can select a different department from a predefined list if they believe the classification is wrong. Any override is logged in the audit trail.
+
+
+6.10 Process
+Use Google Cloud Vision API (primary) or Tesseract (fallback) to extract text from the cleaned image.
+Each field's bounding box coordinates are retrieved from the matched template schema.
+OCR is run on each field region individually to improve accuracy and isolate confidence scores per field.
+Output: a structured JSON object with one entry per field: { field_name, value, confidence, bounding_box }.
+
+6.11 Field Mapping
+Extracted text is mapped to named fields in the template schema. Fields not present in the template schema are discarded. Fields that are in the schema but could not be extracted are returned with value: null and confidence: 0.
+
+6.12 OCR Engine Recommendation
+Google Cloud Vision API is strongly recommended over Tesseract for this use case due to better handwriting recognition accuracy and native support for Hindi and Marathi scripts — which is required for the multilingual optional feature.
+
+
+6.13 Uncertainty Threshold
+Fields with an OCR confidence score below the configured threshold (default: 0.75, adjustable per deployment) are marked as uncertain. These fields are visually highlighted in the digital form.
+
+6.14 Split-View Interface
+The review screen presents a split view:
+Left panel: the cleaned image from Layer 1, with bounding boxes drawn over each field region.
+Right panel: the digitised form with all extracted field values, editable by the clerk.
+Interaction sync: when the clerk clicks or focuses on a field in the right panel, the corresponding bounding box on the left panel is highlighted in a distinct colour (e.g. amber) to visually link the field to its source region in the image.
+Uncertain fields are highlighted in the right panel (e.g. amber background, warning icon). All fields remain editable regardless of confidence score.
+
+6.15 Clerk Actions
+Review all fields, paying particular attention to highlighted uncertain ones.
+Edit any field directly in the right panel.
+When satisfied, click Submit. This triggers Layer 6.
+
+6.16 Important Design Principle
+The system should assist, not assume correctness. It never auto-submits. Every submission is a deliberate human action after review.
+
+
+6.17 Final Review Screen
+Before the record is committed, the clerk is shown a three-panel summary:
+Original image: the unmodified upload from the clerk.
+Pre-edit extracted form: the digitised form as extracted by OCR, before any clerk corrections.
+Final corrected form: the digitised form with all clerk edits applied.
+
+6.18 Data Persistence
+On final confirmation, the following are written to Firestore and Firebase Storage:
+Original image URL
+Cleaned image URL
+Pre-edit extracted JSON
+Final corrected JSON
+Clerk UID, template ID, timestamp
+Audit log entry
+
+6.19 Admin Visibility
+The admin panel surfaces the most recent uploaded document per clerk, enabling security oversight without storing more than necessary for audit purposes.
+
+7. Template Processing Pipeline
+This is a separate flow from the main processing pipeline. It governs how new form templates are added to the system.
+
+7.1 Trigger
+A new template submission is triggered when a clerk encounters a no-match in Layer 2 and chooses to submit the form as a template.
+
+7.2 Clerk Submission Steps
+Clerk uploads a clean, blank copy of the form (the template master).
+Clerk annotates the template: draws bounding boxes over each field region and labels each field with a name (e.g. applicant_name, date_of_birth).
+Clerk provides metadata: form name, department/category.
+Backend saves the submission to the templates_pending Firestore collection with status: pending.
+Clerk is notified that the template has been submitted for admin approval and is not yet available for use.
+
+7.3 Admin Approval Steps
+Admin views the pending queue in the admin panel.
+Admin reviews the submitted template image and field annotation.
+Approve: backend generates the visual embedding for the template and moves it to the templates collection. Template is now live.
+Reject: admin provides a rejection reason. The submitting clerk is notified. Record is moved to rejected status.
+
+8. API Endpoint Specification
+All endpoints require a valid Firebase ID token in the Authorization header (Bearer token). Backend validates using Firebase Admin SDK and reads the user role from Firestore.
+
+
+9. Data Schema (Firestore)
+
+users
+
+templates
+
+templates_pending
+
+records
+
+audit_log
+
+10. Technology Stack
+
+
+11. Optional Features
+The following features are not required for the working prototype but are defined for future implementation:
+
+11.1 Multi-Language Handling
+Support forms where printed labels are in English but handwritten entries may be in Hindi, Marathi, or another regional language. Requires enabling the multilingual model in Google Cloud Vision API or integrating a Devanagari-capable Tesseract language pack.
+
+11.2 Batch Upload and Processing
+Allow clerks to upload multiple form images at once and process them sequentially. The interface would show a summary dashboard of completed and pending verifications, with status indicators per form.
+
+11.3 Duplicate Detection
+Flag potential duplicate entries based on matching key fields such as applicant name and date of birth. When a potential duplicate is detected, prompt the clerk to review before creating a new record. Implemented as a Firestore query on submitted records before finalising Layer 6.
+
+12. Open Questions & Decisions Required
+
+
+13. Recommended Build Order
+Teams should build in this sequence to allow parallel frontend and backend work with minimal blocking:
+
+
+14. Non-Functional Requirements
+
+
+15. Appendix — Glossary
+

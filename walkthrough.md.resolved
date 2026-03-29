@@ -1,0 +1,52 @@
+# Architecture & Implementation Walkthrough
+
+We've successfully integrated Phase 1 (Auth & Role Routing) and Phase 2 (Pipeline API Integration) of your PaperTrail frontend! Here's a breakdown of what has been configured, how it connects, and an architectural overview of the layers in your project.
+
+## Implementation Details
+
+### Phase 1: Authentication & Role Routing
+- **Firebase Sync**: The login/signup forms now properly integrate with the API via the `POST /v1/auth/register` and `GET /v1/auth/me` endpoints.
+- **Zustand Store**: The `useAppStore` hook safely guards user session data and roles. Upon successful login, user details (`uid` & `role`) are written to the store and persisted.
+- **Protected Routing**: The Auth components are wrapped around robust state management ensuring Clerks land on `/upload` and Admins naturally segregate.
+
+### Phase 2: Pipeline API Integration
+- **State Management for Data Pass-Through**: Instead of fetching all the OCR components on a single screen, we are caching pipeline responses via Zustand to transport `session_id`, `templateSchema`, and `extractedFields` elegantly between your visual forms.
+- **Upload Component**: Replaced mocked `.push` behavior to explicitly wait for `POST /v1/pipeline/preprocess` with Multi-part Form payload data to return valid SessionIDs prior to advancing.
+- **Preprocess Loaders**: Orchestrated `api.post('/pipeline/match-template')`, `api.get('/pipeline/classify/{session_id}')`, and `api.post('/pipeline/extract/{session_id}')` to reflect realistic timeline loading on the Preprocess UI.
+- **Review Verification Center**:
+  - Dynamically builds the Form schema off the response from Classification.
+  - Automatically loads the OCR text values returned into their exact matched Input field positions.
+  - Bounding Boxes update off the returned coordinates (via `confidence` conditionals).
+  - Drafts and Record Submission triggers correctly call to `/pipeline/save-draft` and `/pipeline/submit` respectively.
+
+> [!TIP]
+> **To handle missing Cloud Vision APIs during early development**, the Backend `.env` includes `GOOGLE_VISION_ENABLED=false` which intercepts failing Cloud calls to simulate delays and return perfectly mapped mocked OCR payloads mimicking an ID card structure! No need for real credit cards until we go Prod!
+
+---
+
+## Technical Architecture Overview
+
+To answer your question: *"How are all layers handled in our project?"*, here is a snapshot mapping of exactly how the core stack operates from client to cloud:
+
+1. **The Presentation Layer (Frontend/Next.js)**
+   - Built on React Server Components + Client components for heavy interaction layers.
+   - We utilize **TailwindCSS** with Framer Motion to power the Glassmorphism animations natively.
+   - **Zustand** is our persistent Brain. Because a multi-step Document Scanning Pipeline shouldn't store heavily typed structured data loosely in URLs, Zustand locally keeps our current active "Session State" intact across the `/upload -> /preprocess -> /review` flow.
+
+2. **The Gateway & Processing Layer (Backend/FastAPI)**
+   - Written exclusively in Python.
+   - Using synchronous and asynchronous `routers/`, which splits endpoints cleanly structurally into `auth`, `pipeline`, and `records` modules.
+   - **Middleware:** Employs heavily typed Request/Response models using **Pydantic** ensuring the frontend form structure fundamentally mimics the database injection parameters!
+
+3. **The Intelligence Layer (Google Cloud Vision Integration)**
+   - Called explicitly by the `/pipeline/extract` service, we send image bytes directly from temporary persistent Python memory (or storage) to GCP.
+   - It computes localized bounding rects and OCR values, and our custom Python Logic maps these relative values specifically to `(x, y)` percentages so they render perfectly on any viewport resolution in the frontend.
+
+4. **The Database & Auth Layer (Firebase/Firestore)**
+   - Acts as the main Source of Truth.
+   - Documents processed through the FastAPI layer are ultimately saved using Firestore's `document` mapping capabilities under the `records/` collection globally once 'Submitted'.
+
+### Next Steps
+
+The entire core flow for the **Clerks Journey** is now API-aligned.
+Let me know if you are ready to move onto **Phase 3** (Admin Dashboards & Approval Flows) to tackle the rest of the application!

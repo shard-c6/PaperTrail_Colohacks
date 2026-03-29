@@ -18,6 +18,7 @@ import { useAppStore } from '@/store/useAppStore';
 const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address."),
+  preferredLanguage: z.enum(["en-IN", "hi-IN", "mr-IN"]),
   password: z.string()
     .max(12, "Password must be 12 characters or fewer.")
     .regex(/[A-Z]/, "Include at least one uppercase letter.")
@@ -51,21 +52,29 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupForm) => {
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      let token = "";
+      const isMock = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "mock-key";
       
-      const token = await userCredential.user.getIdToken();
+      if (!isMock) {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        token = await userCredential.user.getIdToken();
+      } else {
+        token = data.email.includes('admin') ? 'test_admin_token' : 'test_clerk_token';
+        localStorage.setItem('dev_token', token);
+        await new Promise(r => setTimeout(r, 600)); // Simulate network request for UX
+      }
       
       const response = await api.post('/auth/register', {
         name: data.fullName,
-        email: data.email
+        email: data.email,
+        preferred_language: data.preferredLanguage
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      if (response.data?.success) {
+      if (response.data?.uid) {
         toast.success('Account created successfully');
-        setUser(response.data.data);
-        setRole(response.data.data.role);
+        setUser(response.data);
+        setRole(response.data.role);
         router.push('/upload');
       }
     } catch (error: any) {
@@ -102,6 +111,20 @@ export default function SignupPage() {
             disabled={loading}
           />
           {errors.email && <p className="mt-1 text-sm text-[var(--color-error)]">{errors.email.message}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-[var(--color-on-surface-variant)] mb-1">Preferred Spoken Language</label>
+          <select
+            {...register('preferredLanguage')}
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none appearance-none"
+            disabled={loading}
+          >
+            <option value="en-IN" className="bg-[#121A20]">English (India)</option>
+            <option value="hi-IN" className="bg-[#121A20]">Hindi (India)</option>
+            <option value="mr-IN" className="bg-[#121A20]">Marathi (India)</option>
+          </select>
+          {errors.preferredLanguage && <p className="mt-1 text-sm text-[var(--color-error)]">{errors.preferredLanguage.message}</p>}
         </div>
 
         <div>
