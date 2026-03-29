@@ -60,10 +60,10 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
           >
             <GlassCard className="p-0 overflow-hidden shadow-2xl">
               <div className="flex items-center justify-between p-6 border-b border-[var(--color-ghost-border)]">
-                <h3 className="text-xl font-serif font-bold text-white">{title}</h3>
+                <h3 className="text-xl font-serif font-bold text-[var(--color-on-bg)]">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="text-[var(--color-on-surface-variant)] hover:text-white transition-colors"
+                  className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] transition-colors"
                 >
                   <X size={20} />
                 </button>

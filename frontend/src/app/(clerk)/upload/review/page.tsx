@@ -147,7 +147,7 @@ export default function ReviewPage() {
         <div className="w-full lg:w-1/2 h-1/2 lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-[var(--color-ghost-border)] bg-[var(--color-surface-lowest)]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-ghost-border)] shrink-0">
             <div>
-              <h2 className="text-sm font-bold text-white font-serif">Cleaned Document</h2>
+              <h2 className="text-sm font-bold text-[var(--color-on-bg)] font-serif">Cleaned Document</h2>
               <p className="text-xs text-[var(--color-on-surface-variant)]">Fields highlighted on image</p>
             </div>
             {templateName && (
@@ -204,7 +204,7 @@ export default function ReviewPage() {
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className="absolute -top-7 left-0 bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap shadow-lg z-20"
+                          className="absolute -top-7 left-0 bg-[var(--color-primary)] text-[var(--color-on-bg)] text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap shadow-lg z-20"
                         >
                           {field.label || field.key}
                         </motion.div>
@@ -221,7 +221,7 @@ export default function ReviewPage() {
         <div className="w-full lg:w-1/2 h-1/2 lg:h-full flex flex-col bg-[var(--color-bg)]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-ghost-border)] shrink-0">
             <div>
-              <h2 className="text-sm font-bold text-white font-serif">Data Verification</h2>
+              <h2 className="text-sm font-bold text-[var(--color-on-bg)] font-serif">Data Verification</h2>
               <p className="text-xs text-[var(--color-on-surface-variant)]">
                 {uncertainFields.length > 0
                   ? `${uncertainFields.length} field${uncertainFields.length > 1 ? 's' : ''} need${uncertainFields.length === 1 ? 's' : ''} review`
@@ -280,7 +280,7 @@ export default function ReviewPage() {
                       {isEdited && (
                         <button
                           onClick={e => { e.stopPropagation(); resetField(fieldKey); }}
-                          className="text-[10px] text-[var(--color-on-surface-variant)] hover:text-white flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-surface-high)] border border-[var(--color-ghost-border)]"
+                          className="text-[10px] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-surface-high)] border border-[var(--color-ghost-border)]"
                         >
                           <RotateCcw size={9} /> Reset
                         </button>
@@ -301,7 +301,7 @@ export default function ReviewPage() {
                       onChange={e => updateField(fieldKey, e.target.value)}
                       onFocus={() => setActiveKey(fieldKey)}
                       placeholder={isUncertain ? '⚠ Uncertain — please fill in' : 'No data extracted'}
-                      className={`w-full h-10 px-3 pr-8 rounded text-sm text-white outline-none transition-all ghost-input
+                      className={`w-full h-10 px-3 pr-8 rounded text-sm text-[var(--color-on-bg)] outline-none transition-all ghost-input
                         ${isActive ? 'bg-[var(--color-surface)] ring-1 ring-[var(--color-primary)]' : 'bg-[var(--color-surface-lowest)]'}
                         ${isUncertain && !isActive ? 'bg-[var(--color-warning)]/5 placeholder:text-[var(--color-warning)]/60' : ''}
                       `}
@@ -361,7 +361,7 @@ export default function ReviewPage() {
       {/* Header */}
       <div className="px-8 py-5 border-b border-[var(--color-ghost-border)] flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-xl font-serif font-bold text-white flex items-center gap-3">
+          <h1 className="text-xl font-serif font-bold text-[var(--color-on-bg)] flex items-center gap-3">
             <span className="w-8 h-8 rounded-full bg-[var(--color-success)]/15 flex items-center justify-center">
               <CheckCircle2 size={18} className="text-[var(--color-success)]" />
             </span>
@@ -409,7 +409,7 @@ export default function ReviewPage() {
                     {isUncertain && <AlertTriangle size={9} className="text-[var(--color-warning)]" />}
                     {field.label || field.key}
                   </p>
-                  <p className={`text-sm ${isUncertain ? 'text-[var(--color-warning)]' : 'text-white'}`}>
+                  <p className={`text-sm ${isUncertain ? 'text-[var(--color-warning)]' : 'text-[var(--color-on-bg)]'}`}>
                     {field.value || <span className="text-[var(--color-on-surface-variant)] italic">—</span>}
                   </p>
                   {isUncertain && (
@@ -442,7 +442,7 @@ export default function ReviewPage() {
                     {field.label || field.key}
                     {wasEdited && <span className="ml-auto text-[var(--color-primary)] text-[9px] font-normal normal-case tracking-normal">edited</span>}
                   </p>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-[var(--color-on-bg)]">
                     {field.value || <span className="text-[var(--color-on-surface-variant)] italic">—</span>}
                   </p>
                   {wasEdited && orig && (
@@ -474,7 +474,7 @@ function Stat({ label, value, color }: { label: string; value: string | number; 
   return (
     <div>
       <p className="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-wider">{label}</p>
-      <p className="text-sm font-bold text-white mt-0.5" style={color ? { color } : undefined}>
+      <p className="text-sm font-bold text-[var(--color-on-bg)] mt-0.5" style={color ? { color } : undefined}>
         {value}
       </p>
     </div>

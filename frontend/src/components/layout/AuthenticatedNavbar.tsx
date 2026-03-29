@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/useAppStore';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function AuthenticatedNavbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const router = useRouter();
@@ -36,15 +37,15 @@ export function AuthenticatedNavbar({ isAdmin = false }: { isAdmin?: boolean }) 
       <div className="flex items-center gap-6">
         <Link href={isAdmin ? "/admin" : "/upload"} className="flex items-center gap-2">
           <ScanText className="text-[var(--color-primary)]" size={20} />
-          <span className="text-lg font-serif font-bold text-white leading-none mt-1">PaperTrail</span>
+          <span className="text-lg font-serif font-bold text-[var(--color-on-bg)] leading-none mt-1">PaperTrail</span>
         </Link>
         
         {isAdmin && (
           <div className="hidden md:flex items-center gap-1 text-sm font-medium">
             <Link href="/admin" className="px-3 py-1.5 rounded-md text-[var(--color-primary)] bg-[var(--color-surface-highest)]">Overview</Link>
-            <Link href="/admin/users" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-high)] transition-colors">Users</Link>
-            <Link href="/admin/records" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-high)] transition-colors">Records</Link>
-            <Link href="/admin/templates/pending" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-high)] transition-colors flex items-center gap-2">
+            <Link href="/admin/users" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] hover:bg-[var(--color-surface-high)] transition-colors">Users</Link>
+            <Link href="/admin/records" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] hover:bg-[var(--color-surface-high)] transition-colors">Records</Link>
+            <Link href="/admin/templates/pending" className="px-3 py-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] hover:bg-[var(--color-surface-high)] transition-colors flex items-center gap-2">
               Templates
               <span className="bg-[var(--color-warning)] text-[var(--color-surface)] text-[10px] px-1.5 py-0.5 rounded-full font-bold">3</span>
             </Link>
@@ -60,14 +61,12 @@ export function AuthenticatedNavbar({ isAdmin = false }: { isAdmin?: boolean }) 
             <input 
               type="text" 
               placeholder="Search records..." 
-              className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-full ghost-input text-sm text-white focus:outline-none"
+              className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-full ghost-input text-sm text-[var(--color-on-bg)] focus:outline-none"
             />
           </div>
         )}
         
-        <button className="h-9 w-9 flex items-center justify-center rounded-full bg-[var(--color-surface-low)] text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-highest)] transition-colors">
-          <Moon size={16} />
-        </button>
+        <ThemeToggle />
 
         <div className="relative" ref={dropdownRef}>
           <button 
@@ -83,7 +82,7 @@ export function AuthenticatedNavbar({ isAdmin = false }: { isAdmin?: boolean }) 
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-[var(--color-surface-highest)] border border-[var(--color-ghost-border)] rounded-md shadow-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 border-b border-[var(--color-ghost-border)]">
-                <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+                <p className="text-sm font-medium text-[var(--color-on-bg)] truncate">{user?.name}</p>
                 <p className="text-xs text-[var(--color-on-surface-variant)] truncate">{user?.email}</p>
                 <p className="text-[10px] uppercase font-bold text-[var(--color-primary)] mt-1">{user?.role}</p>
               </div>
@@ -91,7 +90,7 @@ export function AuthenticatedNavbar({ isAdmin = false }: { isAdmin?: boolean }) 
                 <Link 
                   href="/profile" 
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-high)]"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] hover:bg-[var(--color-surface-high)]"
                 >
                   <User size={16} /> Profile & Templates
                 </Link>

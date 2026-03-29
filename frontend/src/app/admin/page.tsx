@@ -66,7 +66,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Admin Dashboard</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">Admin Dashboard</h1>
         <p className="text-[var(--color-on-surface-variant)] text-sm">System-wide overview of PaperTrail digitisation metrics.</p>
       </div>
 
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
               </span>
             </div>
             <div>
-              <h3 className="text-3xl font-bold font-mono text-white mb-1">
+              <h3 className="text-3xl font-bold font-mono text-[var(--color-on-bg)] mb-1">
                 {loading ? '...' : stat.value}
               </h3>
               <p className="text-sm font-medium text-[var(--color-on-surface-variant)]">{stat.label}</p>
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-12">
-        <h3 className="text-xl font-serif font-bold text-white mb-4">Latest Submissions per Clerk</h3>
+        <h3 className="text-xl font-serif font-bold text-[var(--color-on-bg)] mb-4">Latest Submissions per Clerk</h3>
         <GlassCard className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                 ) : (
                   recentUploads.map((record, i) => (
                     <tr key={i} className="hover:bg-[var(--color-surface-highest)]/20 transition-colors">
-                      <td className="px-6 py-4 font-mono text-sm font-semibold text-white">{record.id}</td>
+                      <td className="px-6 py-4 font-mono text-sm font-semibold text-[var(--color-on-bg)]">{record.id}</td>
                       <td className="px-6 py-4 text-sm text-[var(--color-on-surface)]">{record.clerk}</td>
                       <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.template}</td>
                       <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{record.dept}</td>

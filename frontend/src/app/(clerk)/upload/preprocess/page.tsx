@@ -180,7 +180,7 @@ export default function PreprocessPage() {
       <div className="w-full lg:w-1/2 h-1/2 lg:h-full flex flex-col bg-[var(--color-bg)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-ghost-border)] shrink-0">
           <div>
-            <h2 className="text-lg font-serif font-bold text-white">Processing Pipeline</h2>
+            <h2 className="text-lg font-serif font-bold text-[var(--color-on-bg)]">Processing Pipeline</h2>
             <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">AI-assisted document preprocessing engine</p>
           </div>
           <span className="text-xs font-mono text-[var(--color-on-surface-variant)] bg-[var(--color-surface-high)] px-2 py-1 rounded">
@@ -226,7 +226,7 @@ export default function PreprocessPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className={`text-sm font-semibold ${isDone ? 'text-[var(--color-success)]' : isActive ? 'text-white' : 'text-[var(--color-on-surface-variant)]'}`}>
+                      <p className={`text-sm font-semibold ${isDone ? 'text-[var(--color-success)]' : isActive ? 'text-[var(--color-on-bg)]' : 'text-[var(--color-on-surface-variant)]'}`}>
                         {step.label}
                       </p>
                       {isDone && <CheckCircle2 size={14} className="text-[var(--color-success)] shrink-0" />}
@@ -249,7 +249,7 @@ export default function PreprocessPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-xs text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-1">Matched Template</p>
-                    <p className="text-white font-bold font-serif text-lg">{matchInfo.name}</p>
+                    <p className="text-[var(--color-on-bg)] font-bold font-serif text-lg">{matchInfo.name}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-[var(--color-on-surface-variant)] mb-1">Confidence</p>
@@ -306,7 +306,7 @@ export default function PreprocessPage() {
                 <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"><Plus size={18} /></div>
                 <span className="flex flex-col items-start text-left">
                   <span className="font-bold">Submit New Template</span>
-                  <span className="text-xs text-white/60 font-normal">Use the interactive builder to draw fields</span>
+                  <span className="text-xs text-[var(--color-on-bg)]/60 font-normal">Use the interactive builder to draw fields</span>
                 </span>
               </span>
               <ChevronRight size={16} className="opacity-60" />
@@ -314,7 +314,7 @@ export default function PreprocessPage() {
             <Button variant="secondary" onClick={() => toast('Manual template selection coming soon.')} className="w-full py-4 justify-start">
               Select Template Manually...
             </Button>
-            <Button variant="ghost" onClick={handleRetry} className="w-full text-[var(--color-on-surface-variant)] hover:text-white">
+            <Button variant="ghost" onClick={handleRetry} className="w-full text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]">
               <RefreshCcw size={15} className="mr-2" /> Cancel &amp; Retry Upload
             </Button>
           </div>

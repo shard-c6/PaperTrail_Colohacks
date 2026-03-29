@@ -139,19 +139,19 @@ export default function TemplateBuilderPage() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()} 
-            className="w-8 h-8 rounded-full border border-[var(--color-ghost-border)] flex items-center justify-center text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[var(--color-surface-high)] transition-colors"
+            className="w-8 h-8 rounded-full border border-[var(--color-ghost-border)] flex items-center justify-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] hover:bg-[var(--color-surface-high)] transition-colors"
           >
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-lg font-serif font-bold text-white leading-tight">Template Builder</h1>
+            <h1 className="text-lg font-serif font-bold text-[var(--color-on-bg)] leading-tight">Template Builder</h1>
             <p className="text-xs text-[var(--color-on-surface-variant)]">Define OCR extraction zones for new form structures.</p>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
           <div className="text-sm text-[var(--color-on-surface-variant)] hidden sm:block">
-            <span className="text-white font-mono bg-[var(--color-surface-high)] px-2 py-0.5 rounded mr-2">{boxes.length}</span> 
+            <span className="text-[var(--color-on-bg)] font-mono bg-[var(--color-surface-high)] px-2 py-0.5 rounded mr-2">{boxes.length}</span> 
             Fields Drawn
           </div>
           <Button variant="primary" onClick={handleSubmit} isLoading={submitting} className="h-9">
@@ -171,9 +171,9 @@ export default function TemplateBuilderPage() {
             <div className="aspect-[1/1.414] bg-white/5 rounded-sm flex items-center justify-center relative overflow-hidden">
               <LayoutPanelLeft size={24} className="text-[var(--color-primary)]/40" />
             </div>
-            <div className="absolute bottom-2 right-2 bg-[var(--color-primary)] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</div>
+            <div className="absolute bottom-2 right-2 bg-[var(--color-primary)] text-[var(--color-on-bg)] text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</div>
           </div>
-          <button className="h-10 border border-dashed border-[var(--color-ghost-border)] rounded text-xs text-[var(--color-on-surface-variant)] flex items-center justify-center hover:text-white transition-colors hover:bg-white/5">
+          <button className="h-10 border border-dashed border-[var(--color-ghost-border)] rounded text-xs text-[var(--color-on-surface-variant)] flex items-center justify-center hover:text-[var(--color-on-bg)] transition-colors hover:bg-white/5">
             <Plus size={14} className="mr-1" /> Add Page
           </button>
         </div>
@@ -184,7 +184,7 @@ export default function TemplateBuilderPage() {
           {boxes.length === 0 && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-[var(--color-surface)] border border-[var(--color-ghost-border)] px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-10 animate-bounce-subtle">
               <Crosshair size={16} className="text-[var(--color-primary)]" />
-              <span className="text-sm font-medium text-white">Click and drag on the document to draw extraction fields</span>
+              <span className="text-sm font-medium text-[var(--color-on-bg)]">Click and drag on the document to draw extraction fields</span>
             </div>
           )}
 
@@ -271,7 +271,7 @@ export default function TemplateBuilderPage() {
                 value={templateName}
                 onChange={e => setTemplateName(e.target.value)}
                 placeholder="e.g. Birth Registration"
-                className="w-full h-10 px-3 rounded text-sm bg-[var(--color-surface-highest)] border border-[var(--color-ghost-border)] text-white focus:border-[var(--color-primary)] outline-none transition-colors"
+                className="w-full h-10 px-3 rounded text-sm bg-[var(--color-surface-highest)] border border-[var(--color-ghost-border)] text-[var(--color-on-bg)] focus:border-[var(--color-primary)] outline-none transition-colors"
               />
             </div>
             <div>
@@ -279,7 +279,7 @@ export default function TemplateBuilderPage() {
               <select 
                 value={department}
                 onChange={e => setDepartment(e.target.value)}
-                className="w-full h-10 px-3 rounded text-sm bg-[var(--color-surface-highest)] border border-[var(--color-ghost-border)] text-white focus:border-[var(--color-primary)] outline-none appearance-none"
+                className="w-full h-10 px-3 rounded text-sm bg-[var(--color-surface-highest)] border border-[var(--color-ghost-border)] text-[var(--color-on-bg)] focus:border-[var(--color-primary)] outline-none appearance-none"
               >
                 <option value="Revenue">Revenue</option>
                 <option value="Health">Health</option>
@@ -290,7 +290,7 @@ export default function TemplateBuilderPage() {
           </div>
 
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--color-ghost-border)]">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[var(--color-on-bg)] flex items-center gap-2">
               <List size={16} className="text-[var(--color-primary)]" /> Field Schema
             </h3>
             <span className="text-[10px] font-mono text-[var(--color-on-surface-variant)] bg-[var(--color-surface-highest)] px-1.5 py-0.5 rounded">
@@ -324,14 +324,14 @@ export default function TemplateBuilderPage() {
                     <div className="p-3 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-[#121A20] flex items-center justify-center text-[10px] font-mono text-[var(--color-primary)]">
+                          <span className="w-5 h-5 rounded-full bg-[var(--color-surface-low)] flex items-center justify-center text-[10px] font-mono text-[var(--color-primary)]">
                             {index + 1}
                           </span>
                           <input 
                             type="text"
                             value={box.fieldName}
                             onChange={(e) => updateBox(box.id, { fieldName: e.target.value })}
-                            className="bg-transparent text-sm font-bold text-white outline-none w-32 border-b border-transparent focus:border-[var(--color-primary)] transition-colors placeholder-[var(--color-on-surface-variant)]"
+                            className="bg-transparent text-sm font-bold text-[var(--color-on-bg)] outline-none w-32 border-b border-transparent focus:border-[var(--color-primary)] transition-colors placeholder-[var(--color-on-surface-variant)]"
                             placeholder="Field Name"
                           />
                         </div>
@@ -354,7 +354,7 @@ export default function TemplateBuilderPage() {
                                 className={`flex items-center justify-center gap-1.5 text-[10px] uppercase font-bold py-1.5 rounded transition-colors ${
                                   box.fieldType === type 
                                     ? 'bg-[var(--color-primary)] text-[var(--color-surface-lowest)]' 
-                                    : 'bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] hover:text-white'
+                                    : 'bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]'
                                 }`}
                               >
                                 {getIconForType(type)} {type}

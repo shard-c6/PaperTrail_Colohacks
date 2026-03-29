@@ -22,7 +22,7 @@ export function StatsBar() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 divide-x-0 md:divide-x divide-[var(--color-ghost-border)]">
           {stats.map((stat, i) => (
             <div key={i} className={`flex flex-col items-center justify-center text-center ${i % 2 === 1 ? 'border-l border-[var(--color-ghost-border)] pl-6 md:border-none md:pl-0' : ''}`}>
-              <span className="text-3xl md:text-4xl font-serif font-bold text-white mb-2">{stat.value}</span>
+              <span className="text-3xl md:text-4xl font-serif font-bold text-[var(--color-on-bg)] mb-2">{stat.value}</span>
               <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">{stat.label}</span>
             </div>
           ))}

@@ -1,6 +1,39 @@
 @import "tailwindcss";
 
 :root {
+  /* Light Theme */
+  --color-primary: #0f52ba;
+  --color-primary-container: #d6e4f7;
+  --color-secondary: #0066cc;
+  --color-secondary-container: #e6f0ff;
+  
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #f8fafc;
+  --color-surface: #f1f5f9;
+  --color-surface-high: #e2e8f0;
+  --color-surface-highest: #cbd5e1;
+  
+  --color-error: #dc2626;
+  --color-error-container: #fee2e2;
+  
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #475569;
+  
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-success: #059669;
+  --color-success-bg: #d1fae5;
+  
+  --color-bg: #f8fafc;
+  --color-on-bg: #0f172a;
+
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-ghost-border: rgba(0, 0, 0, 0.1);
+  --color-glow: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  /* Dark Theme */
   --color-primary: #b0c8f0;
   --color-primary-container: #0f2a4a;
   --color-secondary: #a6c8ff;
@@ -24,10 +57,10 @@
   --color-success-bg: #d1fae5;
   
   --color-bg: #00142c;
-  --color-on-bg: #d4e3ff;
+  --color-on-bg: #ffffff;
 
   --color-glass: rgba(28, 53, 86, 0.4);
-  --color-ghost-border: rgba(67, 71, 78, 0.15);
+  --color-ghost-border: rgba(255, 255, 255, 0.1);
   --color-glow: rgba(255, 255, 255, 0.15);
 }
 

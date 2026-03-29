@@ -74,7 +74,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-serif font-bold text-white mb-6 text-center">Welcome Back</h2>
+      <h2 className="text-2xl font-serif font-bold text-[var(--color-on-bg)] mb-6 text-center">Welcome Back</h2>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
           <input
             {...register('email')}
             type="email"
-            className="w-full h-11 px-3.5 rounded-md ghost-input text-white w-full outline-none"
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] w-full outline-none"
             placeholder="clerk@gov.in"
             disabled={loading}
           />
@@ -95,13 +95,13 @@ export default function LoginPage() {
             <input
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
-              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
               disabled={loading}
             />
             <button
               type="button"
-              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-white"
+              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

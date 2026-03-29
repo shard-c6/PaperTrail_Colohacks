@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
-import useAppStore from '@/store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
     <div className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-white mb-2">User Management</h1>
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">User Management</h1>
           <p className="text-[var(--color-on-surface-variant)] text-sm">Manage system access and roles across the digitisation platform.</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
             <input 
               type="text" 
               placeholder="Search users..." 
-              className="w-full h-10 pl-10 pr-4 rounded-md ghost-input text-white focus:outline-none text-sm"
+              className="w-full h-10 pl-10 pr-4 rounded-md ghost-input text-[var(--color-on-bg)] focus:outline-none text-sm"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto">
@@ -93,7 +93,7 @@ export default function AdminUsersPage() {
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                   filter === f 
                     ? 'bg-[var(--color-primary)] text-[var(--color-surface-lowest)]' 
-                    : 'bg-[var(--color-surface-low)] text-[var(--color-on-surface-variant)] hover:text-white'
+                    : 'bg-[var(--color-surface-low)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]'
                 }`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}s
@@ -134,7 +134,7 @@ export default function AdminUsersPage() {
                         {u.name.substring(0,2)}
                       </div>
                       <div>
-                        <div className="font-bold text-white text-sm">{u.name}</div>
+                        <div className="font-bold text-[var(--color-on-bg)] text-sm">{u.name}</div>
                         <div className="text-xs text-[var(--color-on-surface-variant)] font-mono mt-0.5">{u.uid}</div>
                       </div>
                     </div>

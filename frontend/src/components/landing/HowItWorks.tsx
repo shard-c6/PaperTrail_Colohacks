@@ -42,7 +42,9 @@ const container = {
   }
 };
 
-const item = {
+import type { Variants } from 'framer-motion';
+
+const item: Variants = {
   hidden: { opacity: 0, y: 30 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
 };
@@ -57,7 +59,7 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">How It Works</h2>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[var(--color-on-bg)] mb-4">How It Works</h2>
         </MotionDiv>
 
         <MotionDiv 
@@ -73,7 +75,7 @@ export function HowItWorks() {
                 <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface-high)] border border-[var(--color-ghost-border)] flex items-center justify-center mb-6 group-hover:border-[var(--color-primary)]/50 transition-colors shadow-inner">
                   <step.icon className="text-[var(--color-primary)]" size={32} strokeWidth={1.5} />
                 </div>
-                <h3 className="text-xl font-bold font-serif text-white mb-3">
+                <h3 className="text-xl font-bold font-serif text-[var(--color-on-bg)] mb-3">
                   <span className="text-[var(--color-on-surface-variant)] text-sm mr-2 font-sans font-normal">Step {idx + 1}</span>
                   {step.title}
                 </h3>

@@ -12,7 +12,7 @@ export default function AuthLayout({
       {/* Glass Container */}
       <div className="relative z-10 w-full max-w-md p-8 sm:p-10 glass-card">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-serif font-bold text-white mb-2">PaperTrail</h1>
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">PaperTrail</h1>
           <p className="text-sm text-[var(--color-on-surface-variant)]">Government Document Digitisation</p>
         </div>
         

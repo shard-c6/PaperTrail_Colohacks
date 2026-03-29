@@ -89,7 +89,7 @@ export default function SignupPage() {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-serif font-bold text-white mb-6 text-center">Create Account</h2>
+      <h2 className="text-2xl font-serif font-bold text-[var(--color-on-bg)] mb-6 text-center">Create Account</h2>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
@@ -97,7 +97,7 @@ export default function SignupPage() {
           <input
             {...register('fullName')}
             type="text"
-            className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
             placeholder="Ramesh Kumar"
             disabled={loading}
           />
@@ -109,7 +109,7 @@ export default function SignupPage() {
           <input
             {...register('email')}
             type="email"
-            className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
             placeholder="clerk@gov.in"
             disabled={loading}
           />
@@ -120,12 +120,12 @@ export default function SignupPage() {
           <label className="block text-sm font-medium text-[var(--color-on-surface-variant)] mb-1">Preferred Spoken Language</label>
           <select
             {...register('preferredLanguage')}
-            className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none appearance-none"
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none appearance-none"
             disabled={loading}
           >
-            <option value="en-IN" className="bg-[#121A20]">English (India)</option>
-            <option value="hi-IN" className="bg-[#121A20]">Hindi (India)</option>
-            <option value="mr-IN" className="bg-[#121A20]">Marathi (India)</option>
+            <option value="en-IN" className="bg-[var(--color-surface-low)]">English (India)</option>
+            <option value="hi-IN" className="bg-[var(--color-surface-low)]">Hindi (India)</option>
+            <option value="mr-IN" className="bg-[var(--color-surface-low)]">Marathi (India)</option>
           </select>
           {errors.preferredLanguage && <p className="mt-1 text-sm text-[var(--color-error)]">{errors.preferredLanguage.message}</p>}
         </div>
@@ -136,13 +136,13 @@ export default function SignupPage() {
             <input
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
-              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
               disabled={loading}
             />
             <button
               type="button"
-              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-white"
+              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -158,13 +158,13 @@ export default function SignupPage() {
             <input
               {...register('confirmPassword')}
               type={showConfirmPassword ? 'text' : 'password'}
-              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 pr-10 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
               disabled={loading}
             />
             <button
               type="button"
-              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-white"
+              className="absolute right-3 top-3 text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}

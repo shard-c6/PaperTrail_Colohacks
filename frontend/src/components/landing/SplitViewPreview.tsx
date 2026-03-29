@@ -101,7 +101,7 @@ export function SplitViewPreview() {
             viewport={{ once: true }}
             className="mb-10 text-center lg:text-left"
           >
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-[var(--color-on-bg)] mb-4">
               Intelligence you can see.
             </h2>
             <p className="text-[var(--color-on-surface-variant)] text-lg border-l-2 border-[var(--color-primary)] pl-4">
@@ -124,7 +124,7 @@ export function SplitViewPreview() {
                   <feature.icon size={18} />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold text-lg mb-1">{feature.title}</h4>
+                  <h4 className="text-[var(--color-on-bg)] font-bold text-lg mb-1">{feature.title}</h4>
                   <p className="text-[var(--color-on-surface-variant)] text-sm">{feature.desc}</p>
                 </div>
               </MotionDiv>

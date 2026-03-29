@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { User, Lock, Mail, Building, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -102,7 +102,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto p-6 lg:p-10 space-y-8">
-      <h1 className="text-3xl font-serif font-bold text-white mb-6">User Dashboard</h1>
+      <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-6">User Dashboard</h1>
 
       {/* Profile Card */}
       <GlassCard className="flex flex-col md:flex-row items-start md:items-center gap-6 p-8">
@@ -111,7 +111,7 @@ export default function ProfilePage() {
         </div>
         
         <div className="flex-1 space-y-2">
-          <h2 className="text-2xl font-bold text-white">{user?.name || 'User Profile'}</h2>
+          <h2 className="text-2xl font-bold text-[var(--color-on-bg)]">{user?.name || 'User Profile'}</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] text-sm">
@@ -145,7 +145,7 @@ export default function ProfilePage() {
       {/* Voice & Accessibility Preferences */}
       <div className="mt-12">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-serif font-bold text-white">Voice & Accessibility</h3>
+          <h3 className="text-xl font-serif font-bold text-[var(--color-on-bg)]">Voice & Accessibility</h3>
           <Button variant="primary" size="sm" onClick={handleSavePreferences} isLoading={savingPrefs}>
             Save Preferences
           </Button>
@@ -159,11 +159,11 @@ export default function ProfilePage() {
                 <select 
                   value={prefs.preferred_language}
                   onChange={(e) => setPrefs(prev => ({ ...prev, preferred_language: e.target.value }))}
-                  className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none appearance-none"
+                  className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none appearance-none"
                 >
-                  <option value="en-IN" className="bg-[#121A20]">English (India)</option>
-                  <option value="hi-IN" className="bg-[#121A20]">Hindi (India)</option>
-                  <option value="mr-IN" className="bg-[#121A20]">Marathi (India)</option>
+                  <option value="en-IN" className="bg-[var(--color-surface-low)]">English (India)</option>
+                  <option value="hi-IN" className="bg-[var(--color-surface-low)]">Hindi (India)</option>
+                  <option value="mr-IN" className="bg-[var(--color-surface-low)]">Marathi (India)</option>
                 </select>
                 <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">This affects translation labels, playback voice modules, and the AI agent language base.</p>
               </div>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="voiceModeToggle" className="block text-sm font-medium text-white cursor-pointer mb-1">Text-to-Speech (TTS) Announcements</label>
+                  <label htmlFor="voiceModeToggle" className="block text-sm font-medium text-[var(--color-on-bg)] cursor-pointer mb-1">Text-to-Speech (TTS) Announcements</label>
                   <p className="text-xs text-[var(--color-on-surface-variant)]">If enabled, the verification page will automatically read aloud required focus points or validation anomalies.</p>
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="voiceAgentToggle" className="block text-sm font-medium text-white cursor-pointer mb-1">Enable AI Voice Agent</label>
+                  <label htmlFor="voiceAgentToggle" className="block text-sm font-medium text-[var(--color-on-bg)] cursor-pointer mb-1">Enable AI Voice Agent</label>
                   <p className="text-xs text-[var(--color-on-surface-variant)]">Activates the microphone button in the verifier. Ask questions about the current record, and the assistant will reply in your preferred language.</p>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export default function ProfilePage() {
       {/* Templates Section */}
       <div className="mt-12">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-serif font-bold text-white">My Template Submissions</h3>
+          <h3 className="text-xl font-serif font-bold text-[var(--color-on-bg)]">My Template Submissions</h3>
           <Button variant="primary" size="sm" onClick={() => toast('Template Wizard launching soon!')}>
             <Plus size={16} className="mr-1" /> New Template
           </Button>
@@ -231,7 +231,7 @@ export default function ProfilePage() {
                 {mockTemplates.map((template) => (
                   <React.Fragment key={template.id}>
                     <tr className="hover:bg-[var(--color-surface-highest)]/20 transition-colors">
-                      <td className="px-6 py-4 font-mono text-sm font-semibold text-white">{template.id}</td>
+                      <td className="px-6 py-4 font-mono text-sm font-semibold text-[var(--color-on-bg)]">{template.id}</td>
                       <td className="px-6 py-4 text-sm text-[var(--color-on-surface)]">{template.name}</td>
                       <td className="px-6 py-4 text-sm text-[var(--color-on-surface-variant)]">{template.submitted}</td>
                       <td className="px-6 py-4"><StatusBadge status={template.status} /></td>
@@ -271,7 +271,7 @@ export default function ProfilePage() {
             <input
               {...register('currentPassword')}
               type="password"
-              className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
             />
             {errors.currentPassword && <p className="mt-1 text-sm text-[var(--color-error)]">{errors.currentPassword.message}</p>}
@@ -282,7 +282,7 @@ export default function ProfilePage() {
             <input
               {...register('newPassword')}
               type="password"
-              className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
             />
             <PasswordStrengthBar password={newPasswordValue} />
@@ -294,7 +294,7 @@ export default function ProfilePage() {
             <input
               {...register('confirmPassword')}
               type="password"
-              className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+              className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
               placeholder="••••••••"
             />
             {errors.confirmPassword && <p className="mt-1 text-sm text-[var(--color-error)]">{errors.confirmPassword.message}</p>}

@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: "PaperTrail transforms handwritten government forms into structured digital records. AI-powered extraction meets human intelligence.",
 };
 
+import { ThemeProvider } from '@/components/ThemeProvider';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,11 +33,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${newsreader.variable} ${jetbrainsMono.variable} dark antialiased`}
+      className={`${inter.variable} ${newsreader.variable} ${jetbrainsMono.variable} antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-on-bg)]">
-        {children}
-        <Toaster position="bottom-right" />
+      <body className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-on-bg)] transition-colors duration-300">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

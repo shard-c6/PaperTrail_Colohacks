@@ -14,11 +14,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = "inline-flex items-center justify-center font-semibold rounded-md transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
     
     const variants = {
-      primary: "bg-[var(--color-on-surface)] text-[var(--color-surface)] hover:bg-white focus-visible:ring-[var(--color-primary)]",
-      secondary: "bg-[var(--color-surface-highest)] text-white border border-[var(--color-ghost-border)] hover:bg-[var(--color-surface-high)] hover:border-[var(--color-glow)] hover:shadow-[0_0_15px_var(--color-glow)] focus-visible:ring-[var(--color-primary)] glass-button",
-      destructive: "bg-[var(--color-error)] text-white hover:bg-[var(--color-error-container)] focus-visible:ring-[var(--color-error)]",
-      ghost: "bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-surface-highest)] hover:text-white focus-visible:ring-[var(--color-primary)]",
-      icon: "bg-[var(--color-surface-low)] text-white rounded-full hover:bg-[var(--color-surface-highest)] focus-visible:ring-[var(--color-primary)]"
+      primary: "bg-[var(--color-on-surface)] text-[var(--color-surface)] hover:bg-[var(--color-on-bg)] focus-visible:ring-[var(--color-primary)]",
+      secondary: "bg-[var(--color-surface-highest)] text-[var(--color-on-bg)] border border-[var(--color-ghost-border)] hover:bg-[var(--color-surface-high)] hover:border-[var(--color-glow)] hover:shadow-[0_0_15px_var(--color-glow)] focus-visible:ring-[var(--color-primary)] glass-button",
+      destructive: "bg-[var(--color-error)] text-[#ffffff] hover:bg-[var(--color-error-container)] focus-visible:ring-[var(--color-error)]",
+      ghost: "bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-surface-highest)] hover:text-[var(--color-on-bg)] focus-visible:ring-[var(--color-primary)]",
+      icon: "bg-[var(--color-surface-low)] text-[var(--color-on-bg)] rounded-full hover:bg-[var(--color-surface-highest)] focus-visible:ring-[var(--color-primary)]"
     };
 
     const sizes = {

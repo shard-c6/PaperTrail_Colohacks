@@ -45,7 +45,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 h-full custom-scrollbar overflow-y-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Account Settings</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">Account Settings</h1>
         <p className="text-[var(--color-on-surface-variant)] text-sm">
           Manage your accessibility preferences and AI voice assistant settings.
         </p>
@@ -60,7 +60,7 @@ export default function SettingsPage() {
               <Languages className="text-[var(--color-primary)]" size={20} />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-white mb-1 font-serif">Language Preferences</h3>
+              <h3 className="text-lg font-bold text-[var(--color-on-bg)] mb-1 font-serif">Language Preferences</h3>
               <p className="text-sm text-[var(--color-on-surface-variant)] leading-relaxed mb-4">
                 Choose the language you prefer the AI voice agent to speak and listen in. Supported options include English, Hindi, and Marathi.
               </p>
@@ -69,11 +69,11 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-[var(--color-on-surface-variant)] mb-2">Primary Language</label>
                 <select
                   {...register('preferred_language')}
-                  className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none appearance-none"
+                  className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none appearance-none"
                 >
-                  <option value="en-IN" className="bg-[#121A20]">English (India)</option>
-                  <option value="hi-IN" className="bg-[#121A20]">Hindi (India)</option>
-                  <option value="mr-IN" className="bg-[#121A20]">Marathi (India)</option>
+                  <option value="en-IN" className="bg-[var(--color-surface-low)]">English (India)</option>
+                  <option value="hi-IN" className="bg-[var(--color-surface-low)]">Hindi (India)</option>
+                  <option value="mr-IN" className="bg-[var(--color-surface-low)]">Marathi (India)</option>
                 </select>
               </div>
             </div>
@@ -89,7 +89,7 @@ export default function SettingsPage() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-lg font-bold text-white font-serif">Screen Reader & TTS</h3>
+                  <h3 className="text-lg font-bold text-[var(--color-on-bg)] font-serif">Screen Reader & TTS</h3>
                   <p className="text-sm text-[var(--color-on-surface-variant)] leading-relaxed mt-1 pr-6">
                     Automatically read aloud low-confidence fields when reviewing uploaded forms. Helps visually impaired clerks or instances with blurry scans.
                   </p>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-lg font-bold text-white font-serif">AI Voice Assistant</h3>
+                  <h3 className="text-lg font-bold text-[var(--color-on-bg)] font-serif">AI Voice Assistant</h3>
                   <p className="text-sm text-[var(--color-on-surface-variant)] leading-relaxed mt-1 pr-6">
                     Enable the microphone button during document review. You can talk to the AI to correct fields (e.g., "Change the middle name to Kumar") or ask questions about the form context.
                   </p>

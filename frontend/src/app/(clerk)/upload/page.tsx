@@ -80,7 +80,7 @@ export default function UploadPage() {
   return (
     <div className="flex-1 flex flex-col p-6 max-w-4xl mx-auto w-full pt-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">New Digitisation Session</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">New Digitisation Session</h1>
         <p className="text-[var(--color-on-surface-variant)]">Upload a scanned government form to begin the OCR pipeline.</p>
       </div>
 
@@ -91,7 +91,7 @@ export default function UploadPage() {
               <FileImage size={40} />
             </div>
             <div className="w-full text-center truncate px-4">
-              <p className="text-white font-medium truncate" title={file.name}>{file.name}</p>
+              <p className="text-[var(--color-on-bg)] font-medium truncate" title={file.name}>{file.name}</p>
               <p className="text-sm text-[var(--color-on-surface-variant)]">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
             </div>
             <div className="flex w-full gap-3 mt-4">
@@ -113,7 +113,7 @@ export default function UploadPage() {
             <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-colors ${isDragging ? 'bg-[var(--color-primary-container)] text-[var(--color-primary)]' : 'bg-[var(--color-surface-highest)] text-[var(--color-on-surface-variant)]'}`}>
               <UploadCloud size={32} />
             </div>
-            <h3 className="text-xl font-bold font-serif text-white mb-2">Drag & Drop Image</h3>
+            <h3 className="text-xl font-bold font-serif text-[var(--color-on-bg)] mb-2">Drag & Drop Image</h3>
             <p className="text-[var(--color-on-surface-variant)] text-sm max-w-sm mb-8">
               Supports JPEG, PNG, TIFF up to 20MB. High resolution scans (300 DPI) recommended.
             </p>

@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="w-full text-center py-6">
         <CheckCircle2 className="mx-auto h-12 w-12 text-[var(--color-success)] mb-4" />
-        <h2 className="text-2xl font-serif font-bold text-white mb-3">Email Sent</h2>
+        <h2 className="text-2xl font-serif font-bold text-[var(--color-on-bg)] mb-3">Email Sent</h2>
         <p className="text-[var(--color-on-surface-variant)] mb-6">
           Check your inbox. Follow the link to reset your password.
         </p>
@@ -58,11 +58,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full relative">
-      <Link href="/login" className="absolute -top-12 -left-4 p-2 text-[var(--color-on-surface-variant)] hover:text-white transition-colors">
+      <Link href="/login" className="absolute -top-12 -left-4 p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)] transition-colors">
         <ArrowLeft size={20} />
       </Link>
       
-      <h2 className="text-2xl font-serif font-bold text-white mb-2">Reset Password</h2>
+      <h2 className="text-2xl font-serif font-bold text-[var(--color-on-bg)] mb-2">Reset Password</h2>
       <p className="text-sm text-[var(--color-on-surface-variant)] mb-6">
         Enter the email address associated with your account. We'll send a reset link via Firebase.
       </p>
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
           <input
             {...register('email')}
             type="email"
-            className="w-full h-11 px-3.5 rounded-md ghost-input text-white outline-none"
+            className="w-full h-11 px-3.5 rounded-md ghost-input text-[var(--color-on-bg)] outline-none"
             placeholder="clerk@gov.in"
             disabled={loading}
           />

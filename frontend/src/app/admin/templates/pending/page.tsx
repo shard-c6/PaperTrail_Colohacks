@@ -78,7 +78,7 @@ export default function TemplateApprovalPage() {
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto p-6 lg:p-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Template Approval Queue</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">Template Approval Queue</h1>
         <p className="text-[var(--color-on-surface-variant)] text-sm">Review clerk-submitted form templates before they are converted to embeddings and go live.</p>
       </div>
 
@@ -89,7 +89,7 @@ export default function TemplateApprovalPage() {
       ) : templates.length === 0 ? (
         <GlassCard className="flex flex-col items-center justify-center p-12 text-center bg-[var(--color-surface-lowest)]/50">
           <CheckCircle size={48} className="text-[var(--color-success)] mb-4" />
-          <h3 className="text-xl font-bold font-serif text-white mb-2">All Caught Up</h3>
+          <h3 className="text-xl font-bold font-serif text-[var(--color-on-bg)] mb-2">All Caught Up</h3>
           <p className="text-[var(--color-on-surface-variant)]">There are no pending templates requiring your approval right now.</p>
         </GlassCard>
       ) : (
@@ -116,7 +116,7 @@ export default function TemplateApprovalPage() {
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <span className="text-xs font-mono font-bold text-[var(--color-primary)]">{template.id}</span>
-                    <h3 className="text-xl font-bold text-white mt-1">{template.name}</h3>
+                    <h3 className="text-xl font-bold text-[var(--color-on-bg)] mt-1">{template.name}</h3>
                     <p className="text-sm text-[var(--color-on-surface-variant)]">{template.department}</p>
                   </div>
                   <span className="bg-[var(--color-warning-bg)]/10 text-[var(--color-warning)] text-xs font-bold px-2.5 py-1 rounded-full border border-[var(--color-warning)]/20 uppercase tracking-wide">
@@ -135,7 +135,7 @@ export default function TemplateApprovalPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--color-ghost-border)]">
-                  <Button variant="secondary" className="flex-1 bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-white border-[var(--color-success)]/30 hover:shadow-[0_0_15px_var(--color-success-bg)]" onClick={() => handleApprove(template.id)}>
+                  <Button variant="secondary" className="flex-1 bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-on-bg)] border-[var(--color-success)]/30 hover:shadow-[0_0_15px_var(--color-success-bg)]" onClick={() => handleApprove(template.id)}>
                     <CheckCircle size={18} className="mr-2" /> Approve & Embed
                   </Button>
                   <Button variant="destructive" className="flex-1" onClick={() => openRejectModal(template.id)}>
@@ -155,7 +155,7 @@ export default function TemplateApprovalPage() {
             Please provide a detailed reason for rejecting this template. This will be shown to the clerk who submitted it.
           </p>
           <textarea
-            className="w-full h-32 p-3 rounded-md ghost-input text-white text-sm outline-none resize-none"
+            className="w-full h-32 p-3 rounded-md ghost-input text-[var(--color-on-bg)] text-sm outline-none resize-none"
             placeholder="e.g., Bounding boxes for the signature field overlap with the date field. Please redraw the annotations cleanly."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}

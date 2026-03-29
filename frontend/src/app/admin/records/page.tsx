@@ -66,7 +66,7 @@ export default function AdminRecordsPage() {
     <div className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-white mb-2">Global Records Viewer</h1>
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-on-bg)] mb-2">Global Records Viewer</h1>
           <p className="text-[var(--color-on-surface-variant)] text-sm">Access and audit every digitised document submitted across the platform.</p>
         </div>
         
@@ -92,7 +92,7 @@ export default function AdminRecordsPage() {
               className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 filter === f 
                   ? 'bg-[var(--color-primary)] text-[var(--color-surface-lowest)] font-bold' 
-                  : 'bg-[var(--color-surface-highest)] text-[var(--color-on-surface-variant)] hover:text-white'
+                  : 'bg-[var(--color-surface-highest)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-bg)]'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -134,7 +134,7 @@ export default function AdminRecordsPage() {
                         <div className="w-8 h-8 rounded bg-[var(--color-surface-high)] flex items-center justify-center text-[var(--color-primary)] shrink-0">
                           <FileText size={16} />
                         </div>
-                        <span className="font-mono text-sm font-semibold text-white">{record.id}</span>
+                        <span className="font-mono text-sm font-semibold text-[var(--color-on-bg)]">{record.id}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-[var(--color-on-surface)] font-medium">{record.clerk}</td>
